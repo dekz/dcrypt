@@ -35,8 +35,8 @@ class Sign: node::ObjectWrap {
 
   private:
     ~Sign();
-    EVP_MD_CTX *mdctx;  /* coverity[member_decl] */
-    const EVP_MD *md;  /* coverity[member_decl] */
+    EVP_MD_CTX *mdctx; 
+    const EVP_MD *md; 
     bool initialised_;
 };
 

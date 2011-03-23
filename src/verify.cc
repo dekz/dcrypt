@@ -180,16 +180,30 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
 
   BIO *bp = NULL;
   EVP_PKEY* pkey;
-  X509 *x509;
 
   bp = BIO_new(BIO_s_mem());
   if(!BIO_write(bp, key_pem, key_pemLen)) return 0;
-
-  x509 = PEM_read_bio_X509(bp, NULL, NULL, NULL );
-  if (x509==NULL) return 0;
+  
+  X509 *x509 = NULL;
+  X509_free(x509);
+  x509 = PEM_read_bio_X509(bp, NULL, 0, NULL);
+  if (x509==NULL) {
+    fprintf(stderr, "x509 is null\n");
+    ERR_print_errors_fp(stderr);
+    pkey = PEM_read_bio_PUBKEY(bp, NULL, 0, NULL);
+    if (!pkey) {
+      fprintf(stderr, "tried to just read pem key, failed\n");
+      ERR_print_errors_fp(stderr);
+      return 0;
+    }
+    //return 0;
+  }
 
   pkey=X509_get_pubkey(x509);
-  if (pkey==NULL) return 0;
+  if (pkey==NULL) {
+    fprintf(stderr, "pub key is null\n");
+    return 0;
+  }
 
   int r = EVP_VerifyFinal(mdctx, sig, siglen, pkey);
   EVP_PKEY_free (pkey);
