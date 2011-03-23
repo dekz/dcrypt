@@ -2,6 +2,7 @@
 #include "random.h"
 #include "hash.h"
 #include "sign.h"
+#include "verify.h"
 
 #include <v8.h>
 #include <node.h>
@@ -15,6 +16,7 @@ extern "C" {
     Random::Initialize(target);
     Hash::Initialize(target);
     Sign::Initialize(target);
+    Verify::Initialize(target);
   }
   NODE_MODULE(dcrypt, init);
 }

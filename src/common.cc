@@ -44,3 +44,21 @@ void base64(unsigned char *input, int length, char** buf64, int* buf64_len) {
 
   BIO_free_all(b64);
 }
+
+void unbase64(unsigned char *input,
+               int length,
+               char** buffer,
+               int* buffer_len) {
+  BIO *b64, *bmem;
+  *buffer = new char[length];
+  memset(*buffer, 0, length);
+
+  b64 = BIO_new(BIO_f_base64());
+  BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+  bmem = BIO_new_mem_buf(input, length);
+  bmem = BIO_push(b64, bmem);
+
+  *buffer_len = BIO_read(bmem, *buffer, length);
+  BIO_free_all(bmem);
+}
+

@@ -6,6 +6,7 @@ console.log _bindings
 Random = _bindings.Random
 Hash = _bindings.Hash
 Sign = _bindings.Sign
+Verify = _bindings.Verify
 
 dcrypt = {}
 
@@ -40,4 +41,8 @@ exports.sign = {}
 exports.sign.createSign = (algo) ->
   return (new Sign).init algo
  
+dcrypt.verify = Verify 
+exports.verify= {}
+exports.verify.createVerify= (algo) ->
+  return (new Verify).init algo
 

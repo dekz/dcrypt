@@ -32,4 +32,9 @@ void HexDecode(unsigned char *input,
                       char** buf64,
                       int* buf64_len);
 
+void unbase64(unsigned char *input,
+               int length,
+               char** buffer,
+               int* buffer_len);
+
 #endif
