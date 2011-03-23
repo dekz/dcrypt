@@ -3,9 +3,23 @@ sys = require 'sys'
 crypto = require 'crypto'
 assert = require 'assert'
 fs = require 'fs'
-
+console.log "Entering test.coffee"
 console.log dcrypt.random.randomBytes(16)
+console.log dcrypt
+
+testHash =  ->
+  console.log 'creating a hash'
+  h = dcrypt.hash.createHash("SHA256")
+  h.update('test')
+  hash1= h.digest(encoding='hex')
+  x = crypto.createHash("SHA256")
+  x.update('test')
+  hash2 = x.digest(encoding='hex')
+  assert.equal hash1, hash2
+  console.log 'hash success'
 #openssl dgst -sha1 -sign priv.pem -out wscript.sha1 wscript; openssl dgst -sha1 -verify pub.pem -signature wscript.sha1 wscript
+
+testHash()
 
 testInteropWithCrypto = ->
   message = 'this is a test message'
