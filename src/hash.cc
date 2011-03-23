@@ -1,20 +1,10 @@
 #include "hash.h"
-#include "common.h"
 
 Persistent<FunctionTemplate> Hash::constructor;
 
 void Hash::Initialize(Handle<Object> target) {
   HandleScope scope;
 
-/*  Local<FunctionTemplate> t = FunctionTemplate::New(New);
-
-  t->InstanceTemplate()->SetInternalFieldCount(1);
-
-  NODE_SET_PROTOTYPE_METHOD(t, "update", Hash::HashUpdate);
-  NODE_SET_PROTOTYPE_METHOD(t, "digest", Hash::HashDigest);
-
-  target->Set(String::NewSymbol("Hash"), t->GetFunction());
-  */
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Hash::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Hash"));
@@ -162,6 +152,7 @@ Handle<Value> Hash::HashDigest(const Arguments &args) {
 
 Hash::Hash() : ObjectWrap() {
   initialised_ = false;
+  mdctx = EVP_MD_CTX_create();
 }
 
 Hash::~Hash() {}

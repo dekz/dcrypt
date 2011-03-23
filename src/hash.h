@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "common.h"
+
 
 using namespace v8;
 using namespace node;

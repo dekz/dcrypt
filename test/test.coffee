@@ -3,23 +3,47 @@ sys = require 'sys'
 crypto = require 'crypto'
 assert = require 'assert'
 fs = require 'fs'
+
 console.log "Entering test.coffee"
-console.log dcrypt.random.randomBytes(16)
 console.log dcrypt
 
+testRandBytes = ->
+  dcrypt.random.randomBytes(16)
+
+#openssl dgst -sha1 -sign priv.pem -out wscript.sha1 wscript; openssl dgst -sha1 -verify pub.pem -signature wscript.sha1 wscript
 testHash =  ->
-  console.log 'creating a hash'
   h = dcrypt.hash.createHash("SHA256")
   h.update('test')
   hash1= h.digest(encoding='hex')
+
   x = crypto.createHash("SHA256")
   x.update('test')
   hash2 = x.digest(encoding='hex')
-  assert.equal hash1, hash2
-  console.log 'hash success'
-#openssl dgst -sha1 -sign priv.pem -out wscript.sha1 wscript; openssl dgst -sha1 -verify pub.pem -signature wscript.sha1 wscript
 
-testHash()
+  assert.equal hash1, hash2
+  console.log "PASS: hash test #{hash1}" 
+
+testSign = ->
+  algo = 'RSA-SHA256'
+  message = 'this is a test message'
+  pub = fs.readFileSync('pub.pem').toString()
+  priv = fs.readFileSync('priv.pem').toString()
+
+  nsigner = crypto.createSign algo 
+  nsigner.update message
+  nsig = nsigner.sign priv, output_format='hex'
+  signer = dcrypt.sign.createSign algo 
+
+  signer.update message
+  sig = signer.sign priv, output_format='hex'
+  assert.equal nsig, sig
+  console.log "PASS: Signature test #{sig}"
+
+  nverif = crypto.createVerify algo
+  nverif.update message
+  #assert.equal true, nverif.verify(pub, nsig, signature_format='hex')
+
+
 
 testInteropWithCrypto = ->
   message = 'this is a test message'
@@ -54,6 +78,7 @@ testInteropWithCrypto = ->
 
 
 #testInteropWithCrypto()
-
-
+testHash()
+testSign()
+testRandBytes()
 

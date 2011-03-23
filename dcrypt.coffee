@@ -5,6 +5,7 @@ console.log _bindings
 #js bindings to the c++ bindings
 Random = _bindings.Random
 Hash = _bindings.Hash
+Sign = _bindings.Sign
 
 dcrypt = {}
 
@@ -32,5 +33,11 @@ dcrypt.hash = Hash
 exports.hash = {}
 exports.hash.createHash = (hash) ->
   return new Hash hash
+
+#sign
+dcrypt.sign = Sign
+exports.sign = {}
+exports.sign.createSign = (algo) ->
+  return (new Sign).init algo
  
 
