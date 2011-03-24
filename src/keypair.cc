@@ -119,7 +119,18 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
     return ThrowException(Exception::Error(String::New("Error allocating new ECDSA key")));
   }
 
+  if (!EC_KEY_check_key(eckey)) { 
+    return ThrowException(Exception::Error(String::New("ECDSA key not valid")));
+  }
   Handle<Object> o = Object::New();
+  const BIGNUM *priv_key = EC_KEY_get0_private_key(eckey);
+  const EC_POINT *pub_key = EC_KEY_get0_public_key(eckey);
+  //encode into an unsigned char array
+  //i2d_ECPrivateKey(eckey, out);
+  //decode from char array
+  //d2i_ECPrivateKey(eckey, in, len);
+  EC_KEY_free(eckey);
+  EC_GROUP_free(ecgroup);
   
 }
 
