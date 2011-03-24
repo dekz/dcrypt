@@ -7,6 +7,7 @@ Random = _bindings.Random
 Hash = _bindings.Hash
 Sign = _bindings.Sign
 Verify = _bindings.Verify
+KeyPair = _bindings.KeyPair
 
 dcrypt = {}
 
@@ -45,4 +46,14 @@ dcrypt.verify = Verify
 exports.verify= {}
 exports.verify.createVerify= (algo) ->
   return (new Verify).init algo
+
+dcrypt.keypair = KeyPair
+exports.keypair.newRSA = (size, exp) ->
+  size = size || 1024
+  exp = exp || 65537
+  return (new KeyPair).newRSA(size, exp)
+
+exports.keypair.newECDSA = (curve) ->
+  curve = curve || "secp256k1"
+  return (new KeyPair).newECDSA(curve)
 

@@ -11,6 +11,12 @@ testRandBytes = ->
   dcrypt.random.randomBytes(16)
 
 #openssl dgst -sha1 -sign priv.pem -out wscript.sha1 wscript; openssl dgst -sha1 -verify pub.pem -signature wscript.sha1 wscript
+testKeyPairs = ->
+  rsa = dcrypt.keypair.newRSA()
+  ecdsa = dcrypt.keypair.newECDSA()
+  console.log rsa
+
+
 testHash =  ->
   h = dcrypt.hash.createHash("SHA256")
   h.update('test')
@@ -84,6 +90,7 @@ testInteropWithCrypto = ->
 
 
 #testInteropWithCrypto()
+testKeyPairs()
 testHash()
 testSign()
 testRandBytes()
