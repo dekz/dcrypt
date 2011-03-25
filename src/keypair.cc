@@ -117,7 +117,7 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
   EC_KEY_set_group(eckey,ecgroup);
 
   if (!EC_KEY_generate_key(eckey)) {
-    return ThrowException(Exception::Error(String::New("Error allocating new ECDSA key")));
+    return ThrowException(Exception::Error(String::New("Error generating new ECDSA key")));
   }
 
   if (!EC_KEY_check_key(eckey)) { 

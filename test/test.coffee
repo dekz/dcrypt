@@ -7,25 +7,28 @@ fs = require 'fs'
 console.log "Entering test.coffee"
 console.log dcrypt
 
-testRandBytes = ->
-  dcrypt.random.randomBytes(16)
+testRandBytes = (test) ->
+  size = 16
+  test.expect 3
+  r = dcrypt.random.randomBytes size 
+  test.equal "object", typeof r
+  test.notEqual r, []
+  test.equal size, r.length
+  test.done()
 
-testKeyPairs = ->
-  dcrypt.keypair.newRSA()
-  dcrypt.keypair.newRSA(1024)
-  dcrypt.keypair.newRSA(2048, 3)
-  try
-    dcrypt.keypair.newRSA(2048, 3)
-    throw "FAIL: Should have caused a error"
-  catch error
+testKeyPairs = (test) ->
+  test.expect(7)
+  test.notDeepEqual(dcrypt.keypair.newRSA(), {})
+  test.notDeepEqual(dcrypt.keypair.newRSA(1024))
+  test.notDeepEqual(dcrypt.keypair.newRSA(2048, 3), {})
+  test.throws(dcrypt.keypair.newRSA(2048, 3))
 
-  dcrypt.keypair.newECDSA()
-  dcrypt.keypair.newECDSA('prime192v1')
-  dcrypt.keypair.newECDSA('prime256v1')
-  try
-    dcrypt.keypair.newECDSA('1234')
-    throw "FAIL: Should have caused a error"
-  catch error
+  test.notDeepEqual(dcrypt.keypair.newECDSA(), {})
+  test.notDeepEqual(dcrypt.keypair.newECDSA('prime192v1'), {})
+  test.notDeepEqual(dcrypt.keypair.newECDSA('prime256v1'), {})
+  test.throws(dcrypt.keypair.newECDSA('1234'))
+
+  test.done()
 
 
 testHash =  ->
@@ -55,15 +58,15 @@ testSign = ->
   signer = dcrypt.sign.createSign algo
   signer.update message
   sig = signer.sign priv, output_format='hex'
-  assert.equal nsig, sig
+  assert.strictEqual nsig, sig
 
   nverif = crypto.createVerify algo
   nverif.update message
   npass = nverif.verify(pub, nsig, signature_format='hex')
+
   dverif = dcrypt.verify.createVerify algo
   dverif.update message
   dpass = dverif.verify(pub, nsig, signature_format='hex')
-  #wont pass as the pub key has to be in x509, not jsut a pub key
   assert.equal dpass, true
 
   dverif2 = dcrypt.verify.createVerify algo
@@ -84,8 +87,10 @@ testSign = ->
   assert.notEqual sig, ecsig
   console.log "PASS: Signature test"
 
-testKeyPairs()
-testHash()
-testSign()
-testRandBytes()
+exports.testKeyPairs = testKeyPairs
+exports.testRandomBytes = testRandBytes
+
+#testHash()
+#testSign()
+#testRandBytes()
 
