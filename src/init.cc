@@ -4,6 +4,7 @@
 #include "sign.h"
 #include "verify.h"
 #include "keypair.h"
+#include "encode.h"
 
 #include <v8.h>
 #include <node.h>
@@ -19,6 +20,7 @@ extern "C" {
     Sign::Initialize(target);
     Verify::Initialize(target);
     KeyPair::Initialize(target);
+    Encode::Initialize(target);
   }
   NODE_MODULE(dcrypt, init);
 }

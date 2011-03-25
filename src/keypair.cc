@@ -123,15 +123,22 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
     return ThrowException(Exception::Error(String::New("ECDSA key not valid")));
   }
   Handle<Object> o = Object::New();
+  //cannot seem to use both EC_KEY_get and i2d
   const BIGNUM *priv_key = EC_KEY_get0_private_key(eckey);
   const EC_POINT *pub_key = EC_KEY_get0_public_key(eckey);
   //encode into an unsigned char array
   //i2d_ECPrivateKey(eckey, out);
   //decode from char array
   //d2i_ECPrivateKey(eckey, in, len);
+  //
+  //EC_KEY_print(bio, key, off);
+
+  //unsigned char *priv;
+ // i2d_ECPrivateKey(eckey, &priv);
+  //fprintf(stderr, "%s\n", priv);
+
   EC_KEY_free(eckey);
   EC_GROUP_free(ecgroup);
-  
 }
 
 KeyPair::KeyPair() : ObjectWrap() {

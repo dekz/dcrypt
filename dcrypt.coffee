@@ -8,6 +8,7 @@ Hash = _bindings.Hash
 Sign = _bindings.Sign
 Verify = _bindings.Verify
 KeyPair = _bindings.KeyPair
+Encode = _bindings.Encode
 
 dcrypt = {}
 
@@ -57,3 +58,11 @@ exports.keypair.newECDSA = (curve) ->
   curve = curve || "secp256k1"
   return (new KeyPair).newECDSA(curve)
 
+dcrypt.encode = Encode
+exports.encode = {}
+exports.encode.encodeBase58 = (data) ->
+  return (new Encode).encodeBase58(data)
+
+# TODO something is wrong here, coffee script is crying
+# exports.encode.decodeBase58 = (data) ->
+#   return (new Encode).decodeBase58(data)
