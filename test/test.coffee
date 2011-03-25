@@ -55,6 +55,12 @@ testSign = ->
   #wont pass as the pub key has to be in x509, not jsut a pub key
   assert.equal dpass, true
 
+  dverif2 = dcrypt.verify.createVerify algo
+  dverif2.update message
+  dpass = dverif2.verify(pub, 'bad sig', signature_format='hex')
+  assert.equal dpass,false
+
+
 
 
 testInteropWithCrypto = ->
