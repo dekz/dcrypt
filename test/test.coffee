@@ -29,8 +29,7 @@ testHash =  ->
 testSign = ->
   algo = 'SHA256'
   message = 'this is a test message'
-  pub = fs.readFileSync('pub.pem').toString()
-  priv = fs.readFileSync('priv.pem').toString()
+
   keys = dcrypt.keypair.newRSA(1024)
   pub = keys.pem_pub.toString()
   priv = keys.pem_priv.toString()
