@@ -13,7 +13,7 @@ testRandBytes = ->
 testKeyPairs = ->
   rsa = dcrypt.keypair.newRSA()
   ecdsa = dcrypt.keypair.newECDSA()
-  console.log rsa
+  console.log ecdsa 
 
 testHash =  ->
   h = dcrypt.hash.createHash("SHA256")
@@ -33,7 +33,6 @@ testSign = ->
   pub = fs.readFileSync('pub.pem').toString()
   priv = fs.readFileSync('priv.pem').toString()
   keys = dcrypt.keypair.newRSA(1024)
-  console.log keys
   pub = keys.pem_pub.toString()
   priv = keys.pem_priv.toString()
 

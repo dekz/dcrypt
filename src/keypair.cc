@@ -102,6 +102,7 @@ Handle<Value> KeyPair::New_RSA_KeyPair(const Arguments &args) {
 }
 
 Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
+  HandleScope scope;
   EC_KEY *eckey = EC_KEY_new();
   ASSERT_IS_STRING_OR_BUFFER(args[0]); 
 
@@ -122,10 +123,9 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
   if (!EC_KEY_check_key(eckey)) { 
     return ThrowException(Exception::Error(String::New("ECDSA key not valid")));
   }
-  Handle<Object> o = Object::New();
   //cannot seem to use both EC_KEY_get and i2d
-  const BIGNUM *priv_key = EC_KEY_get0_private_key(eckey);
-  const EC_POINT *pub_key = EC_KEY_get0_public_key(eckey);
+  // const BIGNUM *priv_key = EC_KEY_get0_private_key(eckey);
+  // const EC_POINT *pub_key = EC_KEY_get0_public_key(eckey);
   //encode into an unsigned char array
   //i2d_ECPrivateKey(eckey, out);
   //decode from char array
@@ -137,8 +137,46 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
  // i2d_ECPrivateKey(eckey, &priv);
   //fprintf(stderr, "%s\n", priv);
 
+  BIO *pub_key_out = BIO_new(BIO_s_mem());
+  BIO *priv_key_out = BIO_new(BIO_s_mem());
+  //initialize this?
+  BUF_MEM *bptr;
+  int ok;
+
+  ok = PEM_write_bio_EC_PUBKEY(pub_key_out, eckey);
+  ok = PEM_write_bio_ECPrivateKey(priv_key_out, eckey, NULL, NULL, 0, NULL, NULL);
+
+  if (!ok) {
+    fprintf(stderr, "\n\n\n\n writing out ecdsa keys failed\n");
+  }
+
+  Handle<Object> o = Object::New();
+  //get char buffer of the bio output, probably better way to do this
+  BIO_get_mem_ptr(priv_key_out, &bptr);
+
+  char *priv_buf = (char *)malloc(bptr->length+1);
+  memcpy(priv_buf, bptr->data, bptr->length-1);
+  priv_buf[bptr->length-1] = 0;
+  Handle<String> priv_str = String::New(priv_buf);
+  o->Set(String::New("pem_priv"), priv_str);
+
+  //get the public key into a char buffer for output to js
+
+  BIO_get_mem_ptr(pub_key_out, &bptr);
+
+  char *pub_buf = (char *) malloc(bptr->length+1);
+  memcpy(pub_buf, bptr->data, bptr->length-1);
+  pub_buf[bptr->length-1] = 0;
+  Handle<String> pub_str = String::New(pub_buf);
+  o->Set(String::New("pem_pub"), pub_str);
+  delete [] pub_buf;
+  delete [] priv_buf;
+  
+  BIO_free(pub_key_out);
+  BIO_free(priv_key_out);
   EC_KEY_free(eckey);
   EC_GROUP_free(ecgroup);
+  return scope.Close(o);
 }
 
 KeyPair::KeyPair() : ObjectWrap() {
