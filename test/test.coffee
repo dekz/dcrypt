@@ -11,8 +11,22 @@ testRandBytes = ->
   dcrypt.random.randomBytes(16)
 
 testKeyPairs = ->
-  rsa = dcrypt.keypair.newRSA()
-  ecdsa = dcrypt.keypair.newECDSA()
+  dcrypt.keypair.newRSA()
+  dcrypt.keypair.newRSA(1024)
+  dcrypt.keypair.newRSA(2048, 3)
+  try
+    dcrypt.keypair.newRSA(2048, 3)
+    throw "FAIL: Should have caused a error"
+  catch error
+
+  dcrypt.keypair.newECDSA()
+  dcrypt.keypair.newECDSA('prime192v1')
+  dcrypt.keypair.newECDSA('prime256v1')
+  try
+    dcrypt.keypair.newECDSA('1234')
+    throw "FAIL: Should have caused a error"
+  catch error
+
 
 testHash =  ->
   h = dcrypt.hash.createHash("SHA256")
