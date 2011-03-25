@@ -31,7 +31,7 @@ testKeyPairs = (test) ->
   test.done()
 
 
-testHash =  ->
+testHash = (test)  ->
   h = dcrypt.hash.createHash("SHA256")
   h.update('test')
   hash1= h.digest(encoding='hex')
@@ -40,10 +40,10 @@ testHash =  ->
   x.update('test')
   hash2 = x.digest(encoding='hex')
 
-  assert.equal hash1, hash2
-  console.log "PASS: hash test"
+  test.deepEqual hash1, hash2
+  test.done()
 
-testSign = ->
+testSign = (test) ->
   algo = 'SHA256'
   message = 'this is a test message'
 
@@ -58,7 +58,7 @@ testSign = ->
   signer = dcrypt.sign.createSign algo
   signer.update message
   sig = signer.sign priv, output_format='hex'
-  assert.strictEqual nsig, sig
+  test.deepEqual nsig, sig
 
   nverif = crypto.createVerify algo
   nverif.update message
@@ -67,12 +67,12 @@ testSign = ->
   dverif = dcrypt.verify.createVerify algo
   dverif.update message
   dpass = dverif.verify(pub, nsig, signature_format='hex')
-  assert.equal dpass, true
+  test.ok dpass
 
   dverif2 = dcrypt.verify.createVerify algo
   dverif2.update message
   dpass = dverif2.verify(pub, 'bad sig', signature_format='hex')
-  assert.equal dpass, false
+  test.ok !dpass
 
   keys = dcrypt.keypair.newECDSA()
   signer = dcrypt.sign.createSign "SHA1"
@@ -82,15 +82,12 @@ testSign = ->
   ecverif = dcrypt.verify.createVerify "SHA1"
   ecverif.update message
   ecpass = ecverif.verify(keys.pem_pub, ecsig, signature_format='hex') 
-  assert.equal ecpass, true
+  test.ok ecpass
 
-  assert.notEqual sig, ecsig
-  console.log "PASS: Signature test"
+  test.notDeepEqual sig, ecsig
+  test.done()
 
 exports.testKeyPairs = testKeyPairs
 exports.testRandomBytes = testRandBytes
-
-#testHash()
-#testSign()
-#testRandBytes()
-
+exports.testHash = testHash
+exports.testSign = testSign
