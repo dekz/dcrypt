@@ -197,16 +197,18 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
     rsa_pub = PEM_read_bio_RSAPublicKey(test2, NULL, NULL, 0);
     if (rsa_pub) {
       EVP_PKEY_set1_RSA(pkey, rsa_pub);
+      RSA_free(rsa_pub);
+      BIO_free(test2);
     } else {
       BIO *test = NULL;
       test = BIO_new(BIO_s_mem());
       if(!BIO_write(test, key_pem, key_pemLen)) return 0;
       pkey = PEM_read_bio_PUBKEY(test, NULL, NULL, 0);
       BIO_free(test);
+      if (!pkey) {
+        fprintf(stderr, "Dcrypt couldn't handle this verification pem public key");
+      }
     }
-
-    RSA_free(rsa_pub);
-    BIO_free(test2);
   } else {
     pkey=X509_get_pubkey(x509);
   }

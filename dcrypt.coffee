@@ -43,7 +43,7 @@ exports.sign = {}
 exports.sign.createSign = (algo) ->
   return (new Sign).init algo
  
-dcrypt.verify = Verify 
+dcrypt.verify = Verify
 exports.verify= {}
 exports.verify.createVerify= (algo) ->
   return (new Verify).init algo
