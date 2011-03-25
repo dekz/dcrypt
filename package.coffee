@@ -18,7 +18,7 @@ repository:
   web: 'https://github.com/dekz/dcrypt'
 
 bugs:
-  mail: 'dcryp@dekz.net'
+  mail: 'dcrypt@dekz.net'
   web: 'https://github.com/dekz/dcrypt/issues'
 
 dependencies:
@@ -26,4 +26,4 @@ dependencies:
 
 engines:
   node: '>= 0.4.2 < 0.5.0'
-  npm: '>= 0.3.15 < 0.4.0'
+  npm: '>= 0.3.15 < 1.0.0'
