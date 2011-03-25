@@ -1,7 +1,7 @@
 name: 'dcrypt'
 description: 'extended openssl bindings'
 keywords: ['crypt', 'crypto', 'dcrypt', 'openssl']
-version: require('fs').readFileSync('./VERSION', 'utf8')
+version: require('fs').readFileSync('./VERSION', 'utf8').trim()
 author: 'Jacob Evans <dcrypt@dekz.net>'
 
 licences: [
