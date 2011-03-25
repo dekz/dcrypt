@@ -32,6 +32,7 @@ Handle<Value> Encode::DecodeBase58(const Arguments &args) {
 }
 
 Encode::Encode() : ObjectWrap() {
+  pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 }
 
 Encode::~Encode() {

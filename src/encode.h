@@ -29,8 +29,7 @@ class Encode: node::ObjectWrap {
 
   private:
     ~Encode();
-   // static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
+    const char* pszBase58;
 };
 #endif
     

@@ -188,12 +188,8 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   X509_free(x509);
   x509 = PEM_read_bio_X509(bp, NULL, 0, NULL);
   if (x509==NULL) {
-    fprintf(stderr, "x509 is null\n");
-    ERR_print_errors_fp(stderr);
     pkey = PEM_read_bio_PUBKEY(bp, NULL, 0, NULL);
     if (!pkey) {
-      fprintf(stderr, "tried to just read pem key, failed\n");
-      ERR_print_errors_fp(stderr);
       return 0;
     }
     //return 0;
