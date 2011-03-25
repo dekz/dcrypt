@@ -21,6 +21,9 @@ class Encode: node::ObjectWrap {
     static Persistent<FunctionTemplate> constructor;
     static void Initialize(Handle<Object> target);
     Encode();
+    static const char* pszBase58() {
+      return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"; 
+    }
 
   protected:
     static Handle<Value> New(const Arguments &args);
@@ -29,7 +32,6 @@ class Encode: node::ObjectWrap {
 
   private:
     ~Encode();
-    const char* pszBase58;
 };
 #endif
     
