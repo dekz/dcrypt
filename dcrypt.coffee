@@ -1,8 +1,6 @@
 _bindings = require './build/default/dcrypt'
-console.log "Inside dcrypt.coffee"
 console.log _bindings
 
-#js bindings to the c++ bindings
 Random = _bindings.Random
 Hash = _bindings.Hash
 Sign = _bindings.Sign
@@ -12,7 +10,7 @@ Encode = _bindings.Encode
 
 dcrypt = {}
 
-##random
+##Random
 dcrypt.random = {}
 dcrypt.random.randomBytes = (len) ->
   buff = new Buffer len
@@ -22,13 +20,13 @@ dcrypt.random.randomBytes = (len) ->
 
 exports.random = dcrypt.random
 
-##hash
+##Hash
 dcrypt.hash = Hash
 exports.hash = {}
 exports.hash.createHash = (hash) ->
   return new Hash hash
 
-##sign
+##Sign
 dcrypt.sign = Sign
 exports.sign = {}
 exports.sign.createSign = (algo) ->
@@ -42,13 +40,13 @@ exports.verify.createVerify= (algo) ->
 ##Key Pairs
 dcrypt.keypair = KeyPair
 exports.keypair = {}
-## new RSA takes a size in bytes of the key, as well as a exponent size. Both these arguments are optional and default to 1024 for key and 65537 for exponent by default
+# newRSA takes a size in bytes of the key, as well as a exponent size. Both these arguments are optional and default to 1024 for key and 65537 for exponent by default
 exports.keypair.newRSA = (size, exp) ->
   size = size || 1024
   exp = exp || 65537
   return (new KeyPair).newRSA(size, exp)
 
-## Creates a new ecdsa key pair, if no curve is supplied it uses "secp256k1" as default
+# newECDSA creates a new ecdsa key pair, if no curve is supplied it uses "secp256k1" as default
 exports.keypair.newECDSA = (curve) ->
   curve = curve or "secp256k1"
   return (new KeyPair).newECDSA(curve)
