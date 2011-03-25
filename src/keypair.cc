@@ -147,7 +147,7 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
   ok = PEM_write_bio_ECPrivateKey(priv_key_out, eckey, NULL, NULL, 0, NULL, NULL);
 
   if (!ok) {
-    fprintf(stderr, "\n\n\n\n writing out ecdsa keys failed\n");
+    return ThrowException(Exception::Error(String::New("Error encoding ECDSA keys")));
   }
 
   Handle<Object> o = Object::New();

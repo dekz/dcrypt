@@ -13,7 +13,6 @@ testRandBytes = ->
 testKeyPairs = ->
   rsa = dcrypt.keypair.newRSA()
   ecdsa = dcrypt.keypair.newECDSA()
-  console.log ecdsa 
 
 testHash =  ->
   h = dcrypt.hash.createHash("SHA256")
@@ -25,10 +24,10 @@ testHash =  ->
   hash2 = x.digest(encoding='hex')
 
   assert.equal hash1, hash2
-  console.log "PASS: hash test #{hash1}"
+  console.log "PASS: hash test"
 
 testSign = ->
-  algo = 'RSA-SHA256'
+  algo = 'SHA256'
   message = 'this is a test message'
   pub = fs.readFileSync('pub.pem').toString()
   priv = fs.readFileSync('priv.pem').toString()
@@ -58,7 +57,19 @@ testSign = ->
   dverif2.update message
   dpass = dverif2.verify(pub, 'bad sig', signature_format='hex')
   assert.equal dpass, false
-  console.log "PASS: Signature test #{sig}"
+
+  keys = dcrypt.keypair.newECDSA()
+  signer = dcrypt.sign.createSign "SHA1"
+  signer.update message
+  ecsig = signer.sign keys.pem_priv, output_format='hex'
+
+  ecverif = dcrypt.verify.createVerify "SHA1"
+  ecverif.update message
+  ecpass = ecverif.verify(keys.pem_pub, ecsig, signature_format='hex') 
+  assert.equal ecpass, true
+
+  assert.notEqual sig, ecsig
+  console.log "PASS: Signature test"
 
 testKeyPairs()
 testHash()
