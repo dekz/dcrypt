@@ -54,6 +54,7 @@ exports.keypair.newRSA = (size, exp) ->
   exp = exp || 65537
   return (new KeyPair).newRSA(size, exp)
 
+#Creates a new ecdsa key pair, if no curve is supplied it uses "secp256k1" as default
 exports.keypair.newECDSA = (curve) ->
   curve = curve || "secp256k1"
   return (new KeyPair).newECDSA(curve)
@@ -63,6 +64,5 @@ exports.encode = {}
 exports.encode.encodeBase58 = (data) ->
   return (new Encode).encodeBase58(data)
 
-# TODO something is wrong here, coffee script is crying
-# exports.encode.decodeBase58 = (data) ->
-#   return (new Encode).decodeBase58(data)
+exports.encode.decodeBase58 = (data) ->
+  return (new Encode).decodeBase58(data)
