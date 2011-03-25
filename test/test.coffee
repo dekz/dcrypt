@@ -60,9 +60,6 @@ testSign = ->
   dpass = dverif2.verify(pub, 'bad sig', signature_format='hex')
   assert.equal dpass,false
 
-
-
-
 testInteropWithCrypto = ->
   message = 'this is a test message'
   algo = 'RSA-SHA'
