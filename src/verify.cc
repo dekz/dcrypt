@@ -179,7 +179,7 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   if (!initialised_) return 0;
 
   BIO *bp = NULL;
-  EVP_PKEY* pkey;
+  EVP_PKEY* pkey = EVP_PKEY_new();
 
   bp = BIO_new(BIO_s_mem());
   if(!BIO_write(bp, key_pem, key_pemLen)) return 0;
@@ -187,22 +187,17 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   X509 *x509 = NULL;
   X509_free(x509);
   x509 = PEM_read_bio_X509(bp, NULL, 0, NULL);
-  RSA *pub_key = NULL;
   if (x509==NULL) {
-    // pkey = PEM_read_bio_PUBKEY(bp, NULL, 0, NULL);
 
     BIO *test = NULL;
     test = BIO_new(BIO_s_mem());
     if(!BIO_write(test, key_pem, key_pemLen)) return 0;
-
-    pub_key = PEM_read_bio_RSAPublicKey(test, &pub_key, NULL, NULL);
-    if (!pub_key) {
+    
+    pkey = PEM_read_bio_PUBKEY(test, NULL, NULL, 0);
+    if (!pkey) {
       fprintf(stderr, "\nDidn't work %s\n", key_pem);
       return 0;
     }
-
-    EVP_PKEY_assign_RSA(pkey, pub_key);
-    //return 0;
   } else {
     pkey=X509_get_pubkey(x509);
   }
