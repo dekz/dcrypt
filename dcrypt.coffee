@@ -12,7 +12,7 @@ Encode = _bindings.Encode
 
 dcrypt = {}
 
-#random
+##random
 dcrypt.random = {}
 dcrypt.random.randomBytes = (len) ->
   buff = new Buffer len
@@ -22,22 +22,13 @@ dcrypt.random.randomBytes = (len) ->
 
 exports.random = dcrypt.random
 
-#keypairs
-dcrypt.keypair = {}
-dcrypt.keypair.newRSA = (keysize, exponent) ->
-  keysize = keysize or 1024
-  exponent = exponent or 65537
- # test = bindings.rsa_new_keypair(keysize, exponent)
-
-exports.keypair = dcrypt.keypair
-
-#hash
+##hash
 dcrypt.hash = Hash
 exports.hash = {}
 exports.hash.createHash = (hash) ->
   return new Hash hash
 
-#sign
+##sign
 dcrypt.sign = Sign
 exports.sign = {}
 exports.sign.createSign = (algo) ->
@@ -48,15 +39,18 @@ exports.verify= {}
 exports.verify.createVerify= (algo) ->
   return (new Verify).init algo
 
+##Key Pairs
 dcrypt.keypair = KeyPair
+exports.keypair = {}
+## new RSA takes a size in bytes of the key, as well as a exponent size. Both these arguments are optional and default to 1024 for key and 65537 for exponent by default
 exports.keypair.newRSA = (size, exp) ->
   size = size || 1024
   exp = exp || 65537
   return (new KeyPair).newRSA(size, exp)
 
-#Creates a new ecdsa key pair, if no curve is supplied it uses "secp256k1" as default
+## Creates a new ecdsa key pair, if no curve is supplied it uses "secp256k1" as default
 exports.keypair.newECDSA = (curve) ->
-  curve = curve || "secp256k1"
+  curve = curve or "secp256k1"
   return (new KeyPair).newECDSA(curve)
 
 dcrypt.encode = Encode
