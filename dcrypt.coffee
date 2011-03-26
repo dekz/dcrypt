@@ -13,6 +13,7 @@ dcrypt = {}
 ##Random
 dcrypt.random = {}
 dcrypt.random.randomBytes = (len) ->
+  len = len or 16
   buff = new Buffer len
   rb = new Random()
   rb.randomBytes buff
