@@ -21,6 +21,10 @@ Openssl bindings for Node.js. Written in Coffeescript.
 * Signing/Verification
 * Hashing
 
+Install
+-------
+    npm install dcrypt
+
 
 Usage
 -----
