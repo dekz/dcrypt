@@ -10,11 +10,21 @@
 #include <node.h>
 #include <node_object_wrap.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+
 using namespace v8;
 using namespace node;
 
 extern "C" {
   static void init(Handle<Object> target) {
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    OpenSSL_add_all_digests();
+    SSL_load_error_strings();
+    ERR_load_crypto_strings();
+    
     Random::Initialize(target);
     Hash::Initialize(target);
     Sign::Initialize(target);
