@@ -17,7 +17,7 @@ testRandBytes = (test) ->
   test.done()
 
 testKeyPairs = (test) ->
-  test.expect(7)
+  test.expect(8)
   test.notDeepEqual(dcrypt.keypair.newRSA(), {})
   test.notDeepEqual(dcrypt.keypair.newRSA(1024))
   test.notDeepEqual(dcrypt.keypair.newRSA(2048, 3), {})
@@ -26,7 +26,13 @@ testKeyPairs = (test) ->
   test.notDeepEqual(dcrypt.keypair.newECDSA(), {})
   test.notDeepEqual(dcrypt.keypair.newECDSA('prime192v1'), {})
   test.notDeepEqual(dcrypt.keypair.newECDSA('prime256v1'), {})
-  test.throws(dcrypt.keypair.newECDSA('1234'))
+  #for some reason nodeunit wont treat test.throws as working with newECDSA with a bad curve
+  try
+    dcrypt.keypair.newECDSA('1234')
+    test.throws(1)
+  catch error
+    test.ok true
+
 
   test.done()
 

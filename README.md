@@ -11,3 +11,4 @@ Openssl bindings for Node.js. Written in Coffeescript.
 TODO
 ----
 * x509 certificates
+* CSR
