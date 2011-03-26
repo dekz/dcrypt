@@ -18,6 +18,8 @@ Openssl bindings for Node.js. Written in Coffeescript.
 * RSA/ECDSA key generation
 * Signing and verification using PEM keys, not only certificates
 * Random bytes using openssl RAND
+* Signing/Verification
+* Hashing
 
 
 Usage
@@ -37,5 +39,6 @@ Verify a signature with just a public key in PEM format
  
 TODO
 ----
+* Finish porting Cipher/Decipher and HMAC
 * x509 certificates
 * CSR
