@@ -1,5 +1,4 @@
 _bindings = require './build/default/dcrypt'
-console.log _bindings
 
 Random = _bindings.Random
 Hash = _bindings.Hash
