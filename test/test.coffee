@@ -32,10 +32,7 @@ testKeyPairs = (test) ->
     test.throws(1)
   catch error
     test.ok true
-
-
   test.done()
-
 
 testHash = (test)  ->
   h = dcrypt.hash.createHash("SHA256")
