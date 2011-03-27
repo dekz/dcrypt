@@ -35,16 +35,42 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   BIO *rsa_bio = BIO_new(BIO_s_mem());
   EVP_PKEY *pkey = EVP_PKEY_new();
 
-  // ssize_t len = DecodeBytes(args[0], BINARY);
-  // char *pem_pub = new char[len];
-  Local<Object> pub_obj = args[0]->ToObject();
-  char *pem_pub = Buffer::Data(pub_obj);
-  size_t pub_len = Buffer::Length(pub_obj);
+  enum encoding enc = ParseEncoding(String::New("binary"));
+  ssize_t len = DecodeBytes(args[0], enc);
+  fprintf(stderr, "%d\n", len);
 
-  Local<Object> msg_obj = args[1]->ToObject();
-  char *msg = Buffer::Data(msg_obj);
-  size_t msg_len = Buffer::Length(msg_obj);
-  
+  char *pem_pub;
+  size_t pub_len;
+  if (Buffer::HasInstance(args[0])) {
+    Local<Object> pub_obj = args[0]->ToObject();
+    pem_pub = Buffer::Data(pub_obj);
+    pub_len = Buffer::Length(pub_obj);
+  } else {
+    pem_pub = new char[len];
+    ssize_t written = DecodeWrite(pem_pub, len, args[0], enc);
+    fprintf(stderr, "%d\n", written);
+    pub_len = written;
+  }
+
+  fprintf(stderr, "%s\n", pem_pub);
+  fprintf(stderr, "%d\n", pub_len);
+
+  char *msg;
+  size_t msg_len;
+  len = DecodeBytes(args[1], enc);
+  fprintf(stderr, "%d\n", len);
+  if (Buffer::HasInstance(args[1])) {
+    Local<Object> msg_obj = args[1]->ToObject();
+    msg = Buffer::Data(msg_obj);
+    msg_len = Buffer::Length(msg_obj);
+  } else {
+    msg = new char[len];
+    ssize_t written = DecodeWrite(msg, len, args[1], enc);
+    msg_len = written;
+    fprintf(stderr, "%s\n", written);
+  }
+
+  fprintf(stderr, "%s\n", msg);
 
   if (pub_len < 0) {
     return ThrowException(Exception::TypeError(String::New("Bad length of key"))); 
@@ -57,8 +83,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   RSA *rsa_pub = RSA_new();
 
   if(!BIO_write(rsa_bio, pem_pub, pub_len)) return ThrowException(Exception::TypeError(String::New("Bad write of key")));
-  fprintf(stderr, "%s\n", pem_pub);
-  fprintf(stderr, "%s\n", msg);
 
    //if this doesn't work use pkey
   rsa_pub = PEM_read_bio_RSAPublicKey(rsa_bio, NULL, NULL, 0);
@@ -68,11 +92,11 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
 
   // rsa_pub = EVP_PKEY_get1_RSA(pkey);
   //should work out the block size to properly allocate
-  unsigned char enc[2560] = { 0 };
-  int written = RSA_public_encrypt(msg_len, (unsigned char*) msg, enc, rsa_pub, RSA_PKCS1_OAEP_PADDING);
+  unsigned char encrypted[2560] = { 0 };
+  int written = RSA_public_encrypt(msg_len, (unsigned char*) msg, encrypted, rsa_pub, RSA_PKCS1_OAEP_PADDING);
   fprintf(stderr, "%s\n", enc);
 
-  Local<Value> outString = Encode(enc, written, BINARY);
+  Local<Value> outString = Encode(encrypted, written, BINARY);
   EVP_PKEY_free(pkey);
   RSA_free(rsa_pub);
   BIO_free(rsa_bio);

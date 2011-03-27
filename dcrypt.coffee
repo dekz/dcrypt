@@ -74,4 +74,4 @@ exports.cipher.createCipheriv = (cipher, key, iv) ->
 dcrypt.rsa = Rsa 
 exports.rsa = {}
 exports.rsa.encrypt = (pem_pub, msg, padding) ->
-  return ((new Rsa).encrypt(pem_pub, msg))
+  return (new Rsa).encrypt(pem_pub, msg)
