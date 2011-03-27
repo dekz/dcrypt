@@ -5,6 +5,7 @@
 #include "verify.h"
 #include "keypair.h"
 #include "encode.h"
+#include "cipher.h"
 
 #include <v8.h>
 #include <node.h>
@@ -31,6 +32,7 @@ extern "C" {
     Verify::Initialize(target);
     KeyPair::Initialize(target);
     Encode::Initialize(target);
+    Cipher::Initialize(target);
   }
   NODE_MODULE(dcrypt, init);
 }
