@@ -33,11 +33,11 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   ASSERT_IS_STRING_OR_BUFFER(args[0]);
   ASSERT_IS_STRING_OR_BUFFER(args[1]);
   BIO *rsa_bio = BIO_new(BIO_s_mem());
-  EVP_PKEY *pkey = EVP_PKEY_new();
+  // EVP_PKEY *pkey = EVP_PKEY_new();
+  RSA *rsa_pub = RSA_new();
 
   enum encoding enc = ParseEncoding(String::New("binary"));
   ssize_t len = DecodeBytes(args[0], enc);
-  fprintf(stderr, "%d\n", len);
 
   char *pem_pub;
   size_t pub_len;
@@ -48,7 +48,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   } else {
     pem_pub = new char[len];
     ssize_t written = DecodeWrite(pem_pub, len, args[0], enc);
-    fprintf(stderr, "%d\n", written);
     pub_len = written;
   }
 
@@ -58,7 +57,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   char *msg;
   size_t msg_len;
   len = DecodeBytes(args[1], enc);
-  fprintf(stderr, "%d\n", len);
   if (Buffer::HasInstance(args[1])) {
     Local<Object> msg_obj = args[1]->ToObject();
     msg = Buffer::Data(msg_obj);
@@ -66,11 +64,9 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   } else {
     msg = new char[len];
     ssize_t written = DecodeWrite(msg, len, args[1], enc);
+    fprintf(stderr, "%s\n", msg);
     msg_len = written;
-    fprintf(stderr, "%s\n", written);
   }
-
-  fprintf(stderr, "%s\n", msg);
 
   if (pub_len < 0) {
     return ThrowException(Exception::TypeError(String::New("Bad length of key"))); 
@@ -80,8 +76,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
     return ThrowException(Exception::TypeError(String::New("Bad length of msg")));
   }
 
-  RSA *rsa_pub = RSA_new();
-
   if(!BIO_write(rsa_bio, pem_pub, pub_len)) return ThrowException(Exception::TypeError(String::New("Bad write of key")));
 
    //if this doesn't work use pkey
@@ -89,15 +83,16 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   if (!rsa_pub) {
     return ThrowException(Exception::TypeError(String::New("Error getting PEM encoded key")));
   }
-
-  // rsa_pub = EVP_PKEY_get1_RSA(pkey);
   //should work out the block size to properly allocate
   unsigned char encrypted[2560] = { 0 };
   int written = RSA_public_encrypt(msg_len, (unsigned char*) msg, encrypted, rsa_pub, RSA_PKCS1_OAEP_PADDING);
-  fprintf(stderr, "%s\n", enc);
 
-  Local<Value> outString = Encode(encrypted, written, BINARY);
-  EVP_PKEY_free(pkey);
+  char *out_hex;
+  int out_hex_len;
+  HexEncode(encrypted, written, &out_hex, &out_hex_len);
+
+  Local<Value> outString = Encode(out_hex, out_hex_len, BINARY);
+  // EVP_PKEY_free(pkey);
   RSA_free(rsa_pub);
   BIO_free(rsa_bio);
   return scope.Close(outString);
