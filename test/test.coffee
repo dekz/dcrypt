@@ -115,8 +115,17 @@ testCipher = (test) ->
   test.deepEqual(ct, ct2)
   test.done()
 
+testRSAEncrypt = (test) ->
+  key = dcrypt.keypair.newRSA()
+  pub = key.pem_pub
+  message = 'test message'
+
+  dcrypt.rsa.encrypt(pub, message, "")
+  test.done()
+
 exports.testKeyPairs = testKeyPairs
 exports.testRandomBytes = testRandBytes
 exports.testHash = testHash
 exports.testSign = testSign
 exports.testCipher = testCipher
+exports.testRSAEncrypt = testRSAEncrypt

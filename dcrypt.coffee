@@ -7,6 +7,7 @@ Verify = _bindings.Verify
 KeyPair = _bindings.KeyPair
 Encode = _bindings.Encode
 Cipher = _bindings.Cipher
+Rsa = _bindings.Rsa
 
 dcrypt = {}
 
@@ -68,3 +69,9 @@ exports.cipher.createCipher = (cipher, key) ->
 
 exports.cipher.createCipheriv = (cipher, key, iv) ->
   return (new Cipher).initiv(cipher, key, iv)
+
+##RSA
+dcrypt.rsa = Rsa 
+exports.rsa = {}
+exports.rsa.encrypt = (pem_pub, msg, padding) ->
+  return (new Rsa).encrypt(pem_pub, msg)

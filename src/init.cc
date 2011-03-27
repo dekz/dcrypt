@@ -4,6 +4,7 @@
 #include "sign.h"
 #include "verify.h"
 #include "keypair.h"
+#include "drsa.h"
 #include "encode.h"
 #include "cipher.h"
 
@@ -26,6 +27,7 @@ extern "C" {
     SSL_load_error_strings();
     ERR_load_crypto_strings();
     
+    DRSA::Initialize(target);
     Random::Initialize(target);
     Hash::Initialize(target);
     Sign::Initialize(target);
