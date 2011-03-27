@@ -184,34 +184,40 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
 Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
   HandleScope scope;
   
-  if (!args[0]->IsString()) {
+  char *body;
+  size_t body_len;
+  
+  if (args[0]->IsString()) {
+    Local<String> str = args[0]->ToString();
+    body_len = str->Length();
+    body = new char[body_len + 1];
+    str->WriteUtf8(body);
+  }
+  else if (Buffer::HasInstance(args[0])) {
+    Local<Object> buf = args[0]->ToObject();
+    body = Buffer::Data(buf);
+    body_len = Buffer::Length(buf);
+  }
+  else {
     return ThrowException(Exception::Error(String::New(
-      "filename must be a string"
+      "PEM body must be a Buffer or string"
     )));
   }
   
-  Handle<String> filename = args[0]->ToString();
-  char *filename_s = new char[filename->Length() + 1];
-  filename->WriteUtf8(filename_s);
+  BIO *bio = BIO_new_mem_buf(body, body_len);
   
-  FILE *file = fopen(filename_s, "r");
-  delete filename_s;
-  
-  if (file == NULL) {
-    return ThrowException(Exception::Error(
-      String::Concat(
-        String::Concat(String::New("Error opening "), filename),
-        String::New(strerror(errno))
-      )
-    ));
+  if (bio == NULL) {
+    return ThrowException(Exception::Error(String::New(
+      ERR_error_string(ERR_get_error(), NULL)
+    )));
   }
+    
+  bool isPublic = args[1]->IsBoolean() && args[1]->IsTrue();
   
   EC_KEY *ec = args[1]->IsBoolean() && args[1]->IsTrue()
-    ? PEM_read_EC_PUBKEY(file, NULL, NULL, NULL)
-    : PEM_read_ECPrivateKey(file, NULL, NULL, NULL)
+    ? PEM_read_bio_EC_PUBKEY(bio, NULL, NULL, NULL)
+    : PEM_read_bio_ECPrivateKey(bio, NULL, NULL, NULL)
   ;
-  
-  fclose(file);
   
   if (ec == NULL) {
     return ThrowException(Exception::Error(String::New(
@@ -246,6 +252,9 @@ Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
     
     o->Set(String::NewSymbol("pub"), pub_key);
   }
+  
+  BIO_free(bio);
+  EC_KEY_free(ec);
   
   return scope.Close(o);
 }
