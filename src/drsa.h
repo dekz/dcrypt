@@ -1,5 +1,5 @@
-#ifndef __NODE_DCRYPT_SIGN_H__
-#define __NODE_DCRYPT_SIGN_H__
+#ifndef __NODE_DCRYPT_DRSA_H__
+#define __NODE_DCRYPT_DRSA_H__
 
 #include <v8.h>
 #include <node.h>
