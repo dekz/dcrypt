@@ -12,6 +12,7 @@ void KeyPair::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "newRSA", New_RSA_KeyPair);
   NODE_SET_PROTOTYPE_METHOD(constructor, "newECDSA", New_ECDSA_KeyPair);
   NODE_SET_PROTOTYPE_METHOD(constructor, "readECDSA", Read_ECDSA_KeyPair);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "readRSA", Read_RSA_KeyPair);
   Local<ObjectTemplate> proto = constructor->PrototypeTemplate();
 
   target->Set(String::NewSymbol("KeyPair"), constructor->GetFunction());
@@ -220,12 +221,12 @@ Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
   
   Handle<Object> o = Object::New();
   o->Set(
-    String::NewSymbol("priv_key"),
+    String::NewSymbol("priv"),
     ec->priv_key ? String::New(BN_bn2hex(ec->priv_key)) : Undefined()
   );
   
   if (ec->pub_key == NULL) {
-    o->Set(String::NewSymbol("pub_key"), Undefined());
+    o->Set(String::NewSymbol("pub"), Undefined());
   }
   else {
     Handle<Object> pub_key = Object::New();
@@ -243,7 +244,87 @@ Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
       String::New(BN_bn2hex(&(ec->pub_key->Z)))
     );
     
-    o->Set(String::NewSymbol("pub_key"), pub_key);
+    o->Set(String::NewSymbol("pub"), pub_key);
+  }
+  
+  return scope.Close(o);
+}
+
+Handle<Value> KeyPair::Read_RSA_KeyPair(const Arguments &args) {
+  HandleScope scope;
+  
+  if (!args[0]->IsString()) {
+    return ThrowException(Exception::Error(String::New(
+      "filename must be a string"
+    )));
+  }
+  
+  Handle<String> filename = args[0]->ToString();
+  char *filename_s = new char[filename->Length() + 1];
+  filename->WriteUtf8(filename_s);
+  
+  FILE *file = fopen(filename_s, "r");
+  delete filename_s;
+  
+  if (file == NULL) {
+    return ThrowException(Exception::Error(
+      String::Concat(
+        String::Concat(String::New("Error opening "), filename),
+        String::New(strerror(errno))
+      )
+    ));
+  }
+  
+  bool isPublic = args[1]->IsBoolean() && args[1]->IsTrue();
+  
+printf("isPublic = %d\n", isPublic); fflush(stdout);
+  RSA *rsa = isPublic
+    ? PEM_read_RSAPublicKey(file, NULL, NULL, NULL)
+    : PEM_read_RSAPrivateKey(file, NULL, NULL, NULL)
+  ;
+printf("rsa = %x\n", rsa); fflush(stdout);
+  
+  fclose(file);
+  
+  if (rsa == NULL) {
+    return ThrowException(Exception::Error(String::New(
+      ERR_error_string(ERR_get_error(), NULL)
+    )));
+  }
+  
+  Handle<Object> o = Object::New();
+  
+  Handle<Object> pub = Object::New();
+  o->Set(String::NewSymbol("pub"), pub);
+  
+  pub->Set(
+    String::NewSymbol("n"),
+    rsa->n ? String::New(BN_bn2hex(rsa->n)) : Undefined()
+  );
+  pub->Set(
+    String::NewSymbol("e"),
+    rsa->e ? String::New(BN_bn2hex(rsa->e)) : Undefined()
+  );
+  
+  if (isPublic) {
+    o->Set(String::NewSymbol("priv"), Undefined());
+  }
+  else {
+    Handle<Object> priv = Object::New();
+    o->Set(String::NewSymbol("priv"), priv);
+    
+    priv->Set(
+      String::NewSymbol("d"),
+      rsa->d ? String::New(BN_bn2hex(rsa->d)) : Undefined()
+    );
+    priv->Set(
+      String::NewSymbol("p"),
+      rsa->p ? String::New(BN_bn2hex(rsa->p)) : Undefined()
+    );
+    priv->Set(
+      String::NewSymbol("q"),
+      rsa->q ? String::New(BN_bn2hex(rsa->q)) : Undefined()
+    );
   }
   
   return scope.Close(o);

@@ -51,9 +51,13 @@ exports.keypair.newECDSA = (curve) ->
   curve = curve or "secp256k1"
   return (new KeyPair).newECDSA(curve)
 
-# readECDSA reads the raw parameters from a PEM file
+# readECDSA reads the raw ECDSA parameters from a PEM file
 exports.keypair.readECDSA = (filename, public) ->
   return (new KeyPair).readECDSA(filename, public)
+
+# readRSA reads the raw RSA parameters from a PEM file
+exports.keypair.readRSA = (filename, public) ->
+  return (new KeyPair).readRSA(filename, public)
 
 dcrypt.encode = Encode
 exports.encode = {}
