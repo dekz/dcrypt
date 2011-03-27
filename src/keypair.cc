@@ -11,6 +11,8 @@ void KeyPair::Initialize(Handle<Object> target) {
 
   NODE_SET_PROTOTYPE_METHOD(constructor, "newRSA", New_RSA_KeyPair);
   NODE_SET_PROTOTYPE_METHOD(constructor, "newECDSA", New_ECDSA_KeyPair);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "parseECDSA", Parse_ECDSA_KeyPair);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "parseRSA", Parse_RSA_KeyPair);
   Local<ObjectTemplate> proto = constructor->PrototypeTemplate();
 
   target->Set(String::NewSymbol("KeyPair"), constructor->GetFunction());
@@ -176,6 +178,169 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
   BIO_free(priv_key_out);
   EC_KEY_free(eckey);
   EC_GROUP_free(ecgroup);
+  return scope.Close(o);
+}
+
+Handle<Value> KeyPair::Parse_ECDSA_KeyPair(const Arguments &args) {
+  HandleScope scope;
+  
+  char *body;
+  size_t body_len;
+  
+  if (args[0]->IsString()) {
+    Local<String> str = args[0]->ToString();
+    body_len = str->Length();
+    body = new char[body_len + 1];
+    str->WriteUtf8(body);
+  }
+  else if (Buffer::HasInstance(args[0])) {
+    Local<Object> buf = args[0]->ToObject();
+    body = Buffer::Data(buf);
+    body_len = Buffer::Length(buf);
+  }
+  else {
+    return ThrowException(Exception::Error(String::New(
+      "PEM body must be a Buffer or string"
+    )));
+  }
+  
+  BIO *bio = BIO_new_mem_buf(body, body_len);
+  
+  if (bio == NULL) {
+    return ThrowException(Exception::Error(String::New(
+      ERR_error_string(ERR_get_error(), NULL)
+    )));
+  }
+    
+  bool isPublic = args[1]->IsBoolean() && args[1]->IsTrue();
+  
+  EC_KEY *ec = args[1]->IsBoolean() && args[1]->IsTrue()
+    ? PEM_read_bio_EC_PUBKEY(bio, NULL, NULL, NULL)
+    : PEM_read_bio_ECPrivateKey(bio, NULL, NULL, NULL)
+  ;
+  
+  if (ec == NULL) {
+    return ThrowException(Exception::Error(String::New(
+      ERR_error_string(ERR_get_error(), NULL)
+    )));
+  }
+  
+  Handle<Object> o = Object::New();
+  o->Set(
+    String::NewSymbol("priv"),
+    ec->priv_key ? String::New(BN_bn2hex(ec->priv_key)) : Undefined()
+  );
+  
+  if (ec->pub_key == NULL) {
+    o->Set(String::NewSymbol("pub"), Undefined());
+  }
+  else {
+    Handle<Object> pub_key = Object::New();
+    
+    pub_key->Set(
+      String::NewSymbol("x"),
+      String::New(BN_bn2hex(&(ec->pub_key->X)))
+    );
+    pub_key->Set(
+      String::NewSymbol("y"),
+      String::New(BN_bn2hex(&(ec->pub_key->Y)))
+    );
+    pub_key->Set(
+      String::NewSymbol("z"),
+      String::New(BN_bn2hex(&(ec->pub_key->Z)))
+    );
+    
+    o->Set(String::NewSymbol("pub"), pub_key);
+  }
+  
+  BIO_free(bio);
+  EC_KEY_free(ec);
+  
+  return scope.Close(o);
+}
+
+Handle<Value> KeyPair::Parse_RSA_KeyPair(const Arguments &args) {
+  HandleScope scope;
+  
+  char *body;
+  size_t body_len;
+  
+  if (args[0]->IsString()) {
+    Local<String> str = args[0]->ToString();
+    body_len = str->Length();
+    body = new char[body_len + 1];
+    str->WriteUtf8(body);
+  }
+  else if (Buffer::HasInstance(args[0])) {
+    Local<Object> buf = args[0]->ToObject();
+    body = Buffer::Data(buf);
+    body_len = Buffer::Length(buf);
+  }
+  else {
+    return ThrowException(Exception::Error(String::New(
+      "PEM body must be a Buffer or string"
+    )));
+  }
+  
+  BIO *bio = BIO_new_mem_buf(body, body_len);
+  
+  if (bio == NULL) {
+    return ThrowException(Exception::Error(String::New(
+      ERR_error_string(ERR_get_error(), NULL)
+    )));
+  }
+    
+  bool isPublic = args[1]->IsBoolean() && args[1]->IsTrue();
+  
+  RSA *rsa = isPublic
+    ? PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL)
+    : PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL)
+  ;
+  
+  if (rsa == NULL) {
+    return ThrowException(Exception::Error(String::New(
+      ERR_error_string(ERR_get_error(), NULL)
+    )));
+  }
+  
+  Handle<Object> o = Object::New();
+  
+  Handle<Object> pub = Object::New();
+  o->Set(String::NewSymbol("pub"), pub);
+  
+  pub->Set(
+    String::NewSymbol("n"),
+    rsa->n ? String::New(BN_bn2hex(rsa->n)) : Undefined()
+  );
+  pub->Set(
+    String::NewSymbol("e"),
+    rsa->e ? String::New(BN_bn2hex(rsa->e)) : Undefined()
+  );
+  
+  if (isPublic) {
+    o->Set(String::NewSymbol("priv"), Undefined());
+  }
+  else {
+    Handle<Object> priv = Object::New();
+    o->Set(String::NewSymbol("priv"), priv);
+    
+    priv->Set(
+      String::NewSymbol("d"),
+      rsa->d ? String::New(BN_bn2hex(rsa->d)) : Undefined()
+    );
+    priv->Set(
+      String::NewSymbol("p"),
+      rsa->p ? String::New(BN_bn2hex(rsa->p)) : Undefined()
+    );
+    priv->Set(
+      String::NewSymbol("q"),
+      rsa->q ? String::New(BN_bn2hex(rsa->q)) : Undefined()
+    );
+  }
+  
+  BIO_free(bio);
+  RSA_free(rsa);
+  
   return scope.Close(o);
 }
 
