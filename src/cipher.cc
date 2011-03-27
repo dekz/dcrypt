@@ -29,7 +29,6 @@ Handle<Value> Cipher::New(const Arguments &args) {
 
 Handle<Value> Cipher::CipherInit(const Arguments &args) {
   HandleScope scope;
-
   Cipher *cipher = ObjectWrap::Unwrap<Cipher>(args.This());
 
   cipher->incomplete_base64=NULL;
@@ -320,6 +319,7 @@ int Cipher::CipherFinal(unsigned char** out, int *out_len) {
 
 Cipher::Cipher() : ObjectWrap() {
   initialised_ = false;
+  ctx = EVP_CIPHER_CTX_new();
 }
 
 Cipher::~Cipher() {

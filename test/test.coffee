@@ -90,7 +90,33 @@ testSign = (test) ->
   test.notDeepEqual sig, ecsig
   test.done()
 
+testCipher = (test) ->
+  key = 'Test key here'
+  message = 'This is the test message!'
+  algo = 'aes-256-cbc'
+
+  cipher = dcrypt.cipher.createCipher(algo, key)
+  ct = cipher.update(message, 'utf8', 'hex')
+  ct += cipher.final('hex')
+
+  test.notDeepEqual(message, ct)
+
+  ndecipher = crypto.createDecipher(algo, key)
+  mt = ndecipher.update(ct, 'hex', 'utf8')
+  mt += ndecipher.final('utf8')
+
+  test.deepEqual(mt, message)
+
+  #reuse
+  cipher.init(algo, key)
+  ct2 = cipher.update(message, 'utf8', 'hex')
+  ct2 += cipher.final('hex')
+
+  test.deepEqual(ct, ct2)
+  test.done()
+
 exports.testKeyPairs = testKeyPairs
 exports.testRandomBytes = testRandBytes
 exports.testHash = testHash
 exports.testSign = testSign
+exports.testCipher = testCipher
