@@ -253,38 +253,40 @@ Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
 Handle<Value> KeyPair::Read_RSA_KeyPair(const Arguments &args) {
   HandleScope scope;
   
-  if (!args[0]->IsString()) {
+  char *body;
+  size_t body_len;
+  
+  if (args[0]->IsString()) {
+    Local<String> str = args[0]->ToString();
+    body_len = str->Length();
+    body = new char[body_len + 1];
+    str->WriteUtf8(body);
+  }
+  else if (Buffer::HasInstance(args[0])) {
+    Local<Object> buf = args[0]->ToObject();
+    body = Buffer::Data(buf);
+    body_len = Buffer::Length(buf);
+  }
+  else {
     return ThrowException(Exception::Error(String::New(
-      "filename must be a string"
+      "PEM body must be a Buffer or string"
     )));
   }
   
-  Handle<String> filename = args[0]->ToString();
-  char *filename_s = new char[filename->Length() + 1];
-  filename->WriteUtf8(filename_s);
+  BIO *bio = BIO_new_mem_buf(body, body_len);
   
-  FILE *file = fopen(filename_s, "r");
-  delete filename_s;
-  
-  if (file == NULL) {
-    return ThrowException(Exception::Error(
-      String::Concat(
-        String::Concat(String::New("Error opening "), filename),
-        String::New(strerror(errno))
-      )
-    ));
+  if (bio == NULL) {
+    return ThrowException(Exception::Error(String::New(
+      ERR_error_string(ERR_get_error(), NULL)
+    )));
   }
-  
+    
   bool isPublic = args[1]->IsBoolean() && args[1]->IsTrue();
   
-printf("isPublic = %d\n", isPublic); fflush(stdout);
   RSA *rsa = isPublic
-    ? PEM_read_RSAPublicKey(file, NULL, NULL, NULL)
-    : PEM_read_RSAPrivateKey(file, NULL, NULL, NULL)
+    ? PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL)
+    : PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL)
   ;
-printf("rsa = %x\n", rsa); fflush(stdout);
-  
-  fclose(file);
   
   if (rsa == NULL) {
     return ThrowException(Exception::Error(String::New(
@@ -326,6 +328,9 @@ printf("rsa = %x\n", rsa); fflush(stdout);
       rsa->q ? String::New(BN_bn2hex(rsa->q)) : Undefined()
     );
   }
+  
+  BIO_free(bio);
+  RSA_free(rsa);
   
   return scope.Close(o);
 }
