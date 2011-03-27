@@ -23,3 +23,16 @@ struct ec_key_st {
   
   EC_EXTRA_DATA *method_data;
 };
+
+struct ec_point_st {
+  const EC_METHOD *meth;
+  
+  /* All members except 'meth' are handled by the method functions,
+   * even if they appear generic */
+  
+  BIGNUM X;
+  BIGNUM Y;
+  BIGNUM Z; /* Jacobian projective coordinates:
+             * (X, Y, Z)  represents  (X/Z^2, Y/Z^3)  if  Z != 0 */
+  int Z_is_one; /* enable optimized point arithmetics for special case */
+} /* EC_POINT */;

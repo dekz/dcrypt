@@ -223,6 +223,29 @@ Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
     String::NewSymbol("priv_key"),
     ec->priv_key ? String::New(BN_bn2hex(ec->priv_key)) : Undefined()
   );
+  
+  if (ec->pub_key == NULL) {
+    o->Set(String::NewSymbol("pub_key"), Undefined());
+  }
+  else {
+    Handle<Object> pub_key = Object::New();
+    
+    pub_key->Set(
+      String::NewSymbol("x"),
+      String::New(BN_bn2hex(&(ec->pub_key->X)))
+    );
+    pub_key->Set(
+      String::NewSymbol("y"),
+      String::New(BN_bn2hex(&(ec->pub_key->Y)))
+    );
+    pub_key->Set(
+      String::NewSymbol("z"),
+      String::New(BN_bn2hex(&(ec->pub_key->Z)))
+    );
+    
+    o->Set(String::NewSymbol("pub_key"), pub_key);
+  }
+  
   return scope.Close(o);
 }
 
