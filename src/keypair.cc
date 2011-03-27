@@ -11,8 +11,8 @@ void KeyPair::Initialize(Handle<Object> target) {
 
   NODE_SET_PROTOTYPE_METHOD(constructor, "newRSA", New_RSA_KeyPair);
   NODE_SET_PROTOTYPE_METHOD(constructor, "newECDSA", New_ECDSA_KeyPair);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "readECDSA", Read_ECDSA_KeyPair);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "readRSA", Read_RSA_KeyPair);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "parseECDSA", Parse_ECDSA_KeyPair);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "parseRSA", Parse_RSA_KeyPair);
   Local<ObjectTemplate> proto = constructor->PrototypeTemplate();
 
   target->Set(String::NewSymbol("KeyPair"), constructor->GetFunction());
@@ -181,7 +181,7 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
   return scope.Close(o);
 }
 
-Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
+Handle<Value> KeyPair::Parse_ECDSA_KeyPair(const Arguments &args) {
   HandleScope scope;
   
   char *body;
@@ -259,7 +259,7 @@ Handle<Value> KeyPair::Read_ECDSA_KeyPair(const Arguments &args) {
   return scope.Close(o);
 }
 
-Handle<Value> KeyPair::Read_RSA_KeyPair(const Arguments &args) {
+Handle<Value> KeyPair::Parse_RSA_KeyPair(const Arguments &args) {
   HandleScope scope;
   
   char *body;
