@@ -33,7 +33,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   ASSERT_IS_STRING_OR_BUFFER(args[0]);
   ASSERT_IS_STRING_OR_BUFFER(args[1]);
   BIO *rsa_bio = BIO_new(BIO_s_mem());
-  // EVP_PKEY *pkey = EVP_PKEY_new();
   RSA *rsa_pub = RSA_new();
 
   enum encoding enc = ParseEncoding(String::New("binary"));
@@ -51,9 +50,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
     pub_len = written;
   }
 
-  fprintf(stderr, "%s\n", pem_pub);
-  fprintf(stderr, "%d\n", pub_len);
-
   char *msg;
   size_t msg_len;
   len = DecodeBytes(args[1], enc);
@@ -64,7 +60,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   } else {
     msg = new char[len];
     ssize_t written = DecodeWrite(msg, len, args[1], enc);
-    fprintf(stderr, "%s\n", msg);
     msg_len = written;
   }
 
@@ -83,16 +78,32 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   if (!rsa_pub) {
     return ThrowException(Exception::TypeError(String::New("Error getting PEM encoded key")));
   }
-  //should work out the block size to properly allocate
-  unsigned char encrypted[2560] = { 0 };
+
+  int keysize = RSA_size(rsa_pub);
+  unsigned char *encrypted = new unsigned char[keysize];
+
   int written = RSA_public_encrypt(msg_len, (unsigned char*) msg, encrypted, rsa_pub, RSA_PKCS1_OAEP_PADDING);
 
-  char *out_hex;
-  int out_hex_len;
-  HexEncode(encrypted, written, &out_hex, &out_hex_len);
+  Local<Value> outString;
+  String::Utf8Value encoding(args[3]->ToString());
 
-  Local<Value> outString = Encode(out_hex, out_hex_len, BINARY);
-  // EVP_PKEY_free(pkey);
+  if (written == 0) {
+    outString = String::New("");
+  } else if (strcasecmp(*encoding, "hex") == 0) {
+    char *out_hex;
+    int out_hex_len;
+    HexEncode(encrypted, written, &out_hex, &out_hex_len);
+    outString = Encode(out_hex, out_hex_len, BINARY);
+  } else if (strcasecmp(*encoding, "base64") == 0) {
+    char *out;
+    int out_len;
+    base64(encrypted, written, &out, &out_len);
+    outString = Encode(out, out_len, BINARY);
+  } else {
+    fprintf(stderr, "unknown encoding \n");
+  }
+
+  delete [] encrypted;
   RSA_free(rsa_pub);
   BIO_free(rsa_bio);
   return scope.Close(outString);

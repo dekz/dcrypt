@@ -120,7 +120,7 @@ testRSAEncrypt = (test) ->
   pub = key.pem_pub
   message = 'test message'
 
-  console.log dcrypt.rsa.encrypt(pub, message, "")
+  console.log dcrypt.rsa.encrypt(pub, message, "PADDING", 'hex')
   test.done()
 
 exports.testKeyPairs = testKeyPairs

@@ -81,5 +81,7 @@ exports.cipher.createCipheriv = (cipher, key, iv) ->
 ##RSA
 dcrypt.rsa = Rsa 
 exports.rsa = {}
-exports.rsa.encrypt = (pem_pub, msg, padding) ->
-  return (new Rsa).encrypt(pem_pub, msg)
+exports.rsa.encrypt = (pem_pub, msg, padding, out_encoding) ->
+  out_encoding = out_encoding or 'hex'
+  padding = padding or 'RSA_PKCS1_PADDING'
+  return (new Rsa).encrypt(pem_pub, msg, padding, out_encoding)
