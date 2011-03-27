@@ -6,6 +6,7 @@ Sign = _bindings.Sign
 Verify = _bindings.Verify
 KeyPair = _bindings.KeyPair
 Encode = _bindings.Encode
+Cipher = _bindings.Cipher
 
 dcrypt = {}
 
@@ -58,3 +59,12 @@ exports.encode.encodeBase58 = (data) ->
 
 exports.encode.decodeBase58 = (data) ->
   return (new Encode).decodeBase58(data)
+
+##Cipher
+dcrypt.cipher = Cipher
+exports.cipher = {}
+exports.cipher.createCipher = (cipher, key) ->
+  return (new Cipher).init(cipher, key)
+
+exports.cipher.createCipheriv = (cipher, key, iv) ->
+  return (new Cipher).initiv(cipher, key, iv)
