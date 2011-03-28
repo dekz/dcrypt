@@ -21,14 +21,13 @@ void Sign::Initialize(Handle<Object> target) {
 bool Sign::SignInit(const char *signType) {
   md = EVP_get_digestbyname(signType);
   if(!md) {
-    fprintf(stderr,"Unknown message digest %s\n", signType);
     return false;
   }
 
   EVP_MD_CTX_init(mdctx);
   int ok = EVP_SignInit_ex(mdctx, md, NULL);
   if (!ok) {
-   ThrowException(Exception::TypeError(String::New("not ok")));
+    return false;
   }
   initialised_ = true;
   return true;
@@ -40,7 +39,7 @@ int Sign::SignUpdate(char *data, int len) {
   }
   int ok = EVP_SignUpdate(mdctx, data, len);
   if (!ok) {
-    fprintf(stderr,"Not ok when performing signupdate with %s size %d\n", data, len);
+    return 0;
   }
   return 1;
 }
@@ -56,13 +55,12 @@ int Sign::SignFinal(unsigned char **md_value, unsigned int *md_len, char *key_pe
 
   pkey = PEM_read_bio_PrivateKey(bp, NULL, 0, NULL);
   if (pkey == NULL) {
-    printf("Private key is null");
     return 0;
   }
 
   int ok = EVP_SignFinal(mdctx, *md_value, md_len, pkey); 
   if (!ok) {
-      ThrowException(Exception::Error(String::New("Problem performing SignFinal")));
+    return 0;
   }
   EVP_MD_CTX_cleanup(mdctx);
   initialised_ = false;
