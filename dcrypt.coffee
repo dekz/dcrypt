@@ -85,6 +85,7 @@ exports.rsa.encrypt = (pem_pub, msg, padding, out_encoding) ->
   out_encoding = out_encoding or 'hex'
   padding = padding or 'RSA_PKCS1_PADDING'
   return (new Rsa).encrypt(pem_pub, msg, padding, out_encoding)
+
 exports.rsa.decrypt = (pem_priv, enc_msg, padding, in_encoding) ->
   out_encoding = out_encoding or 'hex'
   padding = padding or 'RSA_PKCS1_PADDING'

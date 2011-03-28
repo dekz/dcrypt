@@ -34,8 +34,11 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
 
   ASSERT_IS_STRING_OR_BUFFER(args[0]);
   ASSERT_IS_STRING_OR_BUFFER(args[1]);
+  ASSERT_IS_STRING_OR_BUFFER(args[2]);
+  ASSERT_IS_STRING_OR_BUFFER(args[3]);
   BIO *rsa_bio = BIO_new(BIO_s_mem());
   RSA *rsa_pub = RSA_new();
+  unsigned char pad;
 
   enum encoding enc = ParseEncoding(String::New("binary"));
   ssize_t len = DecodeBytes(args[0], enc);
@@ -51,7 +54,7 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
     ssize_t written = DecodeWrite(pem_pub, len, args[0], enc);
     pub_len = written;
   }
-
+  //read in message from args
   char *msg;
   size_t msg_len;
   len = DecodeBytes(args[1], enc);
@@ -64,6 +67,19 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
     ssize_t written = DecodeWrite(msg, len, args[1], enc);
     msg_len = written;
   }
+
+  //read in the padding type from args
+  String::Utf8Value padding_type(args[2]->ToString());
+  pad = RSA_PKCS1_PADDING;
+  if (strcasecmp(*padding_type, "RSA_NO_PADDING") == 0) {
+    pad = RSA_NO_PADDING;
+  } else if (strcasecmp(*padding_type, "RSA_PKCS1_OAEP_PADDING") == 0) {
+    pad = RSA_PKCS1_OAEP_PADDING;
+  } else if (strcasecmp(*padding_type, "RSA_SSLV23_PADDING") == 0) {
+    pad = RSA_SSLV23_PADDING;
+  }
+
+
 
   if (pub_len < 0) {
     return ThrowException(Exception::TypeError(String::New("Bad length of key"))); 
@@ -86,7 +102,7 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   int keysize = RSA_size(rsa_pub);
   unsigned char *encrypted = new unsigned char[keysize];
 
-  int written = RSA_public_encrypt(msg_len, (unsigned char*) msg, encrypted, rsa_pub, RSA_PKCS1_OAEP_PADDING);
+  int written = RSA_public_encrypt(msg_len, (unsigned char*) msg, encrypted, rsa_pub, pad);
 
   Local<Value> outString;
   String::Utf8Value encoding(args[3]->ToString());
@@ -166,6 +182,19 @@ Handle<Value> DRSA::RSADecrypt(const Arguments &args) {
     //binary
   }
 
+  //use the padding we might have been given
+  unsigned char pad;
+  String::Utf8Value padding_type(args[2]->ToString());
+  pad = RSA_PKCS1_PADDING;
+  if (strcasecmp(*padding_type, "RSA_NO_PADDING") == 0) {
+    pad = RSA_NO_PADDING;
+  } else if (strcasecmp(*padding_type, "RSA_PKCS1_OAEP_PADDING") == 0) {
+    pad = RSA_PKCS1_OAEP_PADDING;
+  } else if (strcasecmp(*padding_type, "RSA_SSLV23_PADDING") == 0) {
+    pad = RSA_SSLV23_PADDING;
+  }
+  
+
   if (!BIO_write(rsa_bio, priv_buf, priv_len)) {
      return ThrowException(Exception::Error(String::New("Problem reading Private key")));
   }
@@ -177,7 +206,7 @@ Handle<Value> DRSA::RSADecrypt(const Arguments &args) {
 
   int keysize = RSA_size(rsa_priv);
   unsigned char *out_buf = new unsigned char[keysize];
-  int written = RSA_private_decrypt(ct_len, (unsigned char*)ct_buf, out_buf, rsa_priv, RSA_PKCS1_OAEP_PADDING);
+  int written = RSA_private_decrypt(ct_len, (unsigned char*)ct_buf, out_buf, rsa_priv, pad);
 
   if (written < 0) {
      return ThrowException(Exception::Error(String::New("Problem Decrypting Message")));

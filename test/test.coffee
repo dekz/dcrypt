@@ -121,8 +121,8 @@ testRSAEncrypt = (test) ->
   priv = key.pem_priv
   message = 'test message'
 
-  enc = dcrypt.rsa.encrypt(pub, message, "PADDING", 'hex')
-  clear_msg = dcrypt.rsa.decrypt(priv, enc, "PADDING", 'hex')
+  enc = dcrypt.rsa.encrypt(pub, message, 'RSA_PKCS1_PADDING', 'hex')
+  clear_msg = dcrypt.rsa.decrypt(priv, enc, 'RSA_PKCS1_PADDING', 'hex')
   test.deepEqual clear_msg, message
   test.done()
 
