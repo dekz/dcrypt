@@ -24,9 +24,9 @@ bool Hmac::HmacInit(char* hashType, char* key, int key_len) {
     return false;
   }
 
-  HMAC_CTX_init(&ctx2);
-  // HMAC_Init(ctx, key, key_len, md);
-  HMAC_Init_ex(&ctx2, key, key_len, md, NULL);
+  HMAC_CTX_init(ctx);
+  HMAC_Init(ctx, key, key_len, md);
+  // HMAC_Init_ex(&ctx2, key, key_len, md, NULL);
   initialised_ = true;
   return true;
 }
@@ -69,7 +69,7 @@ Handle<Value> Hmac::HmacInit(const Arguments& args) {
 
 int Hmac::HmacUpdate(char* data, int len) {
   if (!initialised_) return 0;
-  HMAC_Update(&ctx2, (unsigned char*)data, len);
+  HMAC_Update(ctx, (unsigned char*)data, len);
   return 1;
 }
 
@@ -157,8 +157,8 @@ Handle<Value> Hmac::HmacDigest(const Arguments& args) {
 int Hmac::HmacDigest(unsigned char** md_value, unsigned int *md_len) {
   if (!initialised_) return 0;
   *md_value = new unsigned char[EVP_MAX_MD_SIZE];
-  HMAC_Final(&ctx2, *md_value, md_len);
-  HMAC_CTX_cleanup(&ctx2);
+  HMAC_Final(ctx, *md_value, md_len);
+  HMAC_CTX_cleanup(ctx);
   initialised_ = false;
   return 1;
 }
@@ -175,13 +175,10 @@ Handle<Value> Hmac::New(const Arguments &args) {
 
 Hmac::Hmac() : ObjectWrap() {
   initialised_ = false;
-  // HMAC_CTX_init(&ctx2);
-  ctx = (HMAC_CTX *)OPENSSL_malloc(sizeof(HMAC_CTX));
-  // ctx = &ctx2;
-  fprintf(stderr, "%d \n", &ctx2);
-  fprintf(stderr, "%d \n", sizeof(HMAC_CTX));
+  //FIXME
+  ctx = (HMAC_CTX *)OPENSSL_malloc(sizeof(HMAC_CTX)*2);
 }
 
 Hmac::~Hmac() {
-  // OPENSSL_free(&ctx2);
+  OPENSSL_free(ctx);
 }
