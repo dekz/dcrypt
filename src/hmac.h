@@ -38,6 +38,5 @@ class Hmac: node::ObjectWrap {
     HMAC_CTX *ctx;
     const EVP_MD *md;
     bool initialised_;
-    HMAC_CTX ctx2;
 };
 #endif
