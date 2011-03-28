@@ -78,8 +78,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
     pad = RSA_SSLV23_PADDING;
   }
 
-
-
   if (pub_len < 0) {
     return ThrowException(Exception::TypeError(String::New("Bad length of key"))); 
   }
