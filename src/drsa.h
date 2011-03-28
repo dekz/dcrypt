@@ -29,6 +29,7 @@ class DRSA: node::ObjectWrap {
   protected:
     static Handle<Value> New(const Arguments &args);
     static Handle<Value> RSAEncrypt(const Arguments &args);
+    static Handle<Value> RSADecrypt(const Arguments &args);
   private:
     ~DRSA();
 };

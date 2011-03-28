@@ -118,9 +118,12 @@ testCipher = (test) ->
 testRSAEncrypt = (test) ->
   key = dcrypt.keypair.newRSA()
   pub = key.pem_pub
+  priv = key.pem_priv
   message = 'test message'
 
-  console.log dcrypt.rsa.encrypt(pub, message, "PADDING", 'hex')
+  enc = dcrypt.rsa.encrypt(pub, message, "PADDING", 'hex')
+  clear_msg = dcrypt.rsa.decrypt(priv, enc, "PADDING", 'hex')
+  test.deepEqual clear_msg, message
   test.done()
 
 exports.testKeyPairs = testKeyPairs
