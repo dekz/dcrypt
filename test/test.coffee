@@ -132,9 +132,24 @@ testRSAEncrypt = (test) ->
   test.deepEqual clear_msg, message
   test.done()
 
+testHMAC = (test) ->
+  key = 'test key'
+  message = 'message for me and you'
+  nhm = crypto.createHmac('sha256', key)
+  nhm.update message
+  n_msg = nhm.digest('hex')
+
+  dhm = dcrypt.hmac.createHmac('sha256', key)
+  dhm.update message
+  d_msg = dhm.digest('hex')
+
+  test.deepEqual d_msg, n_msg
+  test.done()
+
 exports.testKeyPairs = testKeyPairs
 exports.testRandomBytes = testRandBytes
 exports.testHash = testHash
 exports.testSign = testSign
 exports.testCipher = testCipher
 exports.testRSAEncrypt = testRSAEncrypt
+exports.testHMAC = testHMAC

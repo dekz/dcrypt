@@ -10,6 +10,7 @@ Encode = _bindings.Encode
 Cipher = _bindings.Cipher
 Decipher = _bindings.Decipher
 Rsa = _bindings.Rsa
+Hmac = _bindings.Hmac
 
 dcrypt = {}
 
@@ -106,3 +107,9 @@ exports.rsa.decrypt = (pem_priv, enc_msg, padding, in_encoding) ->
   out_encoding = out_encoding or 'hex'
   padding = padding or 'RSA_PKCS1_PADDING'
   return (new Rsa).decrypt(pem_priv, enc_msg, padding, in_encoding)
+
+##HMAC
+dcrypt.hmac = Hmac
+exports.hmac = {}
+exports.hmac.createHmac = (hmac, key) ->
+  return (new Hmac).init(hmac, key)
