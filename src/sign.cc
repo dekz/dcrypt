@@ -208,5 +208,7 @@ Handle<Value> Sign::SignFinal(const Arguments &args) {
 }  
 
 Sign::~Sign() {
+  EVP_MD_CTX_cleanup(mdctx);
+  OPENSSL_free(mdctx);
 }
 

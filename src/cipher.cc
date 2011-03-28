@@ -323,4 +323,6 @@ Cipher::Cipher() : ObjectWrap() {
 }
 
 Cipher::~Cipher() {
+  EVP_CIPHER_CTX_cleanup(ctx);
+  OPENSSL_free(ctx);
 }

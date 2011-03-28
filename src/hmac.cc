@@ -180,5 +180,6 @@ Hmac::Hmac() : ObjectWrap() {
 }
 
 Hmac::~Hmac() {
+  HMAC_CTX_cleanup(ctx);
   OPENSSL_free(ctx);
 }

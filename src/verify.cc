@@ -238,4 +238,7 @@ Verify::Verify() : ObjectWrap() {
   mdctx = EVP_MD_CTX_create();
 }
 
-Verify::~Verify() {}
+Verify::~Verify() {
+  EVP_MD_CTX_cleanup(mdctx);
+  OPENSSL_free(mdctx);
+}

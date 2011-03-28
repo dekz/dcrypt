@@ -440,6 +440,8 @@ Decipher::Decipher() : ObjectWrap() {
 }
 
 Decipher::~Decipher() {
+  EVP_CIPHER_CTX_cleanup(ctx);
+  OPENSSL_free(ctx);
 }
 
 
