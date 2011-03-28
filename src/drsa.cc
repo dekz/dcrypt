@@ -116,6 +116,9 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
 
   int written = RSA_public_encrypt(msg_len, (unsigned char*) msg, encrypted, rsa_pub, pad);
 
+  delete [] msg;
+  delete [] pem_pub;
+
   Local<Value> outString;
   String::Utf8Value encoding(args[3]->ToString());
 
@@ -223,6 +226,11 @@ Handle<Value> DRSA::RSADecrypt(const Arguments &args) {
   if (written < 0) {
      return ThrowException(Exception::Error(String::New("Problem Decrypting Message")));
   }
+
+  delete [] priv_buf;
+  delete [] ciphertext;
+  BIO_free(rsa_bio);
+  RSA_free(rsa_priv);
 
   Local<Value> outString = Encode(out_buf, written, BINARY);
   return scope.Close(outString);
