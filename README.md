@@ -41,6 +41,11 @@ Create a new ECDSA Key Pair - no params is default secp256k1 curve
 
 Verify a signature with just a public key in PEM format
     verified = verifer.verify(pem_public, signature, signature_format='hex')
+
+Encrypt and Decrypt with RSA
+    enc = dcrypt.rsa.encrypt(pub, message, 'RSA_PKCS1_PADDING', 'hex')
+    clear_msg = dcrypt.rsa.decrypt(priv, enc, 'RSA_PKCS1_PADDING', 'hex')
+    
     
  
 TODO
