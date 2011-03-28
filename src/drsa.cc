@@ -92,7 +92,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
 
   rsa_pub = PEM_read_bio_RSAPublicKey(rsa_bio, NULL, NULL, 0);
   if (!rsa_pub) {
-    // return ThrowException(Exception::TypeError(String::New("Error getting PEM encoded key")));
     //might not have been a key, could be an x509 cert
     X509 *x509 = NULL;
     X509_free(x509);
@@ -224,7 +223,6 @@ Handle<Value> DRSA::RSADecrypt(const Arguments &args) {
   if (written < 0) {
      return ThrowException(Exception::Error(String::New("Problem Decrypting Message")));
   }
-
 
   Local<Value> outString = Encode(out_buf, written, BINARY);
   return scope.Close(outString);

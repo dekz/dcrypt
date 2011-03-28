@@ -46,6 +46,19 @@ Encrypt and Decrypt with RSA
     enc = dcrypt.rsa.encrypt(pub, message, 'RSA_PKCS1_PADDING', 'hex')
     clear_msg = dcrypt.rsa.decrypt(priv, enc, 'RSA_PKCS1_PADDING', 'hex')
     
+Encrypt a message with AES and a phrase
+    cipher = dcrypt.cipher.createCipher('AES-256-cbc')
+    ciphertext = cipher.update('Hello there', 'utf8', 'hex')
+    ciphertext += cipher.final('hex')
+
+Decrypt a message with AES and a phrase
+    decipher = dcrypt.decipher.createDecipher('AES-256-cbc')
+    cleartext = cipher.update(ciphertext, 'hex', 'utf8')
+    cleartext += cipher.final('utf8')
+    //cleartext: 'Hello there'
+
+Parse a RSA private key file and generate primitives
+    keypair.parseRSA(fs.readFileSync('/path/to/rsa.priv'), false)
     
  
 TODO
