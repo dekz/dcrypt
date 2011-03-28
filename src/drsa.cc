@@ -94,13 +94,15 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
     int out_hex_len;
     HexEncode(encrypted, written, &out_hex, &out_hex_len);
     outString = Encode(out_hex, out_hex_len, BINARY);
+    delete [] out_hex;
   } else if (strcasecmp(*encoding, "base64") == 0) {
     char *out;
     int out_len;
     base64(encrypted, written, &out, &out_len);
     outString = Encode(out, out_len, BINARY);
+    delete [] out;
   } else {
-    fprintf(stderr, "unknown encoding \n");
+    outString = Encode(encrypted, written, BINARY);
   }
 
   delete [] encrypted;
