@@ -28,7 +28,7 @@
     "mail": "dcrypt@dekz.net",
     "web": "https://github.com/dekz/dcrypt/issues"
   },
-  "main": "./dcrypt.js",
+  "main": "./dcrypt.coffee",
   "dependencies": {
     "coffee-script": ">= 0.9.5 < 1.1.0"
   },

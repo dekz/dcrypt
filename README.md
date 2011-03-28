@@ -73,6 +73,6 @@ Parse a RSA private key file and generate primitives
  
 TODO
 ----
-* Finish porting Cipher/Decipher and HMAC
+* Finish porting HMAC
 * x509 certificates
 * CSR
