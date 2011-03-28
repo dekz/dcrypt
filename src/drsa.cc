@@ -28,7 +28,6 @@ Handle<Value> DRSA::New(const Arguments &args) {
 
 //I expect, pub_key, message, padding type, outencoding 
 //Where pub_key probably should be PEM format or a CERT
-//TODO add cert support(x509)
 Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
   HandleScope scope;
 
@@ -112,8 +111,6 @@ Handle<Value> DRSA::RSAEncrypt(const Arguments &args) {
     }
   }
   
-  //Get the right padding type from arg 3
-
   //Encrypt our message
   int keysize = RSA_size(rsa_pub);
   unsigned char *encrypted = new unsigned char[keysize];

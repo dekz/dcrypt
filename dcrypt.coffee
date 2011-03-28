@@ -1,5 +1,6 @@
 _bindings = require './build/default/dcrypt'
 
+#OpenSSL bindings for Node.js. This module extends what is in node-crypto bringing much needed additional functionality.
 Random = _bindings.Random
 Hash = _bindings.Hash
 Sign = _bindings.Sign
@@ -12,6 +13,7 @@ Rsa = _bindings.Rsa
 dcrypt = {}
 
 ##Random
+#Given a length, randomBytes returns a buffer full of random data. 
 dcrypt.random = {}
 dcrypt.random.randomBytes = (len) ->
   len = len or 16
@@ -23,17 +25,21 @@ dcrypt.random.randomBytes = (len) ->
 exports.random = dcrypt.random
 
 ##Hash
+#Create a hash object to digest some messages. Call hash.update(msg) to continually digest new data and hash.final(encoding_type) to receive the final digested message.
 dcrypt.hash = Hash
 exports.hash = {}
 exports.hash.createHash = (hash) ->
   return new Hash hash
 
 ##Sign
+#Sign a message with a private key. This message can then be verified as coming from that private key with a corresponding public key. This object can take and PKI algorithm type, such as ECDSA and RSA. 
 dcrypt.sign = Sign
 exports.sign = {}
 exports.sign.createSign = (algo) ->
   return (new Sign).init algo
- 
+
+##Verify
+#Use verify to verify a signed message came from the associated private key. Verify.final can take either a PEM encoded certificate or a PEM encoded public key. Result of Verify.final is a boolean as to whether it passed or not. 
 dcrypt.verify = Verify
 exports.verify= {}
 exports.verify.createVerify= (algo) ->
@@ -79,6 +85,7 @@ exports.cipher.createCipheriv = (cipher, key, iv) ->
   return (new Cipher).initiv(cipher, key, iv)
 
 ##RSA
+#Encrypt a message with a RSA public key and decrypt it with the associated private key. Public key can either be in PEM key format or a PEM certificate. If no padding is chosen PKCS1 padding will be used. If no output encoding is supplied, hex is used.
 dcrypt.rsa = Rsa 
 exports.rsa = {}
 exports.rsa.encrypt = (pem_pub, msg, padding, out_encoding) ->
