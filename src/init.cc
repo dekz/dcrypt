@@ -7,6 +7,7 @@
 #include "drsa.h"
 #include "encode.h"
 #include "cipher.h"
+#include "decipher.h"
 
 #include <v8.h>
 #include <node.h>
@@ -35,6 +36,7 @@ extern "C" {
     KeyPair::Initialize(target);
     Encode::Initialize(target);
     Cipher::Initialize(target);
+    Decipher::Initialize(target);
   }
   NODE_MODULE(dcrypt, init);
 }

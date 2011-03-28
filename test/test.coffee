@@ -112,6 +112,12 @@ testCipher = (test) ->
   ct2 = cipher.update(message, 'utf8', 'hex')
   ct2 += cipher.final('hex')
 
+  decipher = dcrypt.decipher.createDecipher(algo, key)
+  clear = decipher.update(ct2, 'hex', 'utf8')
+  clear += decipher.final('utf8')
+
+  test.deepEqual(clear, message)
+
   test.deepEqual(ct, ct2)
   test.done()
 

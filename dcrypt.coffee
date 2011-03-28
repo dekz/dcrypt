@@ -8,6 +8,7 @@ Verify = _bindings.Verify
 KeyPair = _bindings.KeyPair
 Encode = _bindings.Encode
 Cipher = _bindings.Cipher
+Decipher = _bindings.Decipher
 Rsa = _bindings.Rsa
 
 dcrypt = {}
@@ -83,6 +84,14 @@ exports.cipher.createCipher = (cipher, key) ->
 
 exports.cipher.createCipheriv = (cipher, key, iv) ->
   return (new Cipher).initiv(cipher, key, iv)
+
+dcrypt.decipher = Decipher
+exports.decipher = {}
+exports.decipher.createDecipher = (cipher, key) ->
+  return (new Decipher).init(cipher, key)
+
+exports.cipher.createDecipheriv = (cipher, key, iv) ->
+  return (new Decipher).initiv(cipher, key, iv)
 
 ##RSA
 #Encrypt a message with a RSA public key and decrypt it with the associated private key. Public key can either be in PEM key format or a PEM certificate. If no padding is chosen PKCS1 padding will be used. If no output encoding is supplied, hex is used.

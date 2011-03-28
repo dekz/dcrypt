@@ -62,3 +62,57 @@ void unbase64(unsigned char *input,
   BIO_free_all(bmem);
 }
 
+
+// LengthWithoutIncompleteUtf8 from V8 d8-posix.cc
+// see http://v8.googlecode.com/svn/trunk/src/d8-posix.cc
+int LengthWithoutIncompleteUtf8(char* buffer, int len) {
+  int answer = len;
+  // 1-byte encoding.
+  static const int kUtf8SingleByteMask = 0x80;
+  static const int kUtf8SingleByteValue = 0x00;
+  // 2-byte encoding.
+  static const int kUtf8TwoByteMask = 0xe0;
+  static const int kUtf8TwoByteValue = 0xc0;
+  // 3-byte encoding.
+  static const int kUtf8ThreeByteMask = 0xf0;
+  static const int kUtf8ThreeByteValue = 0xe0;
+  // 4-byte encoding.
+  static const int kUtf8FourByteMask = 0xf8;
+  static const int kUtf8FourByteValue = 0xf0;
+  // Subsequent bytes of a multi-byte encoding.
+  static const int kMultiByteMask = 0xc0;
+  static const int kMultiByteValue = 0x80;
+  int multi_byte_bytes_seen = 0;
+  while (answer > 0) {
+    int c = buffer[answer - 1];
+    // Ends in valid single-byte sequence?
+    if ((c & kUtf8SingleByteMask) == kUtf8SingleByteValue) return answer;
+    // Ends in one or more subsequent bytes of a multi-byte value?
+    if ((c & kMultiByteMask) == kMultiByteValue) {
+      multi_byte_bytes_seen++;
+      answer--;
+    } else {
+      if ((c & kUtf8TwoByteMask) == kUtf8TwoByteValue) {
+        if (multi_byte_bytes_seen >= 1) {
+          return answer + 2;
+        }
+        return answer - 1;
+      } else if ((c & kUtf8ThreeByteMask) == kUtf8ThreeByteValue) {
+        if (multi_byte_bytes_seen >= 2) {
+          return answer + 3;
+        }
+        return answer - 1;
+      } else if ((c & kUtf8FourByteMask) == kUtf8FourByteValue) {
+        if (multi_byte_bytes_seen >= 3) {
+          return answer + 4;
+        }
+        return answer - 1;
+      } else {
+        return answer;  // Malformed UTF-8.
+      }
+    }
+  }
+  return 0;
+}
+
+

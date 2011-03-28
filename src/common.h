@@ -37,4 +37,6 @@ void unbase64(unsigned char *input,
                char** buffer,
                int* buffer_len);
 
+int LengthWithoutIncompleteUtf8(char *buffer, int len);
+
 #endif
