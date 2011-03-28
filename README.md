@@ -16,11 +16,11 @@ dcrypt
 Openssl bindings for Node.js. Written in Coffeescript.
 
 * RSA/ECDSA key generation
-* RSA/ECDSA key primitives from parsing keys 
-* Signing and verification using PEM keys, not only certificates
+* RSA/ECDSA key primitives from parsing key files
+* Signing and verification using PEM encoded keys, not just certificates
 * Random bytes using openssl RAND
 * Hashing
-* RSA Encrypt/Decrypt
+* Encryption and Decryption with all Ciphers supported in OpenSSL, as well as RSA encryption and decryption
 
 Install
 -------
