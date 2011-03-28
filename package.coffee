@@ -21,7 +21,7 @@ bugs:
   mail: 'dcrypt@dekz.net'
   web: 'https://github.com/dekz/dcrypt/issues'
 
-main: './dcrypt.coffee'
+main: './dcrypt.js'
 dependencies:
   'coffee-script': '>= 0.9.5 < 1.1.0'
 
