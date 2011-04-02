@@ -76,3 +76,8 @@ TODO
 * Finish porting HMAC
 * x509 certificates
 * CSR
+
+Configure Options
+-----
+Build without ECDSA bindings
+    node-waf configure --without-ecdsa=true
