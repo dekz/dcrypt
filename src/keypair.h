@@ -7,8 +7,11 @@
 #include <node_buffer.h>
 
 #include <openssl/evp.h>
-#include <openssl/ecdsa.h>
 #include <openssl/err.h>
+
+#ifndef WITH_ECDSA
+#include <openssl/ecdsa.h>
+#endif
 
 #include <string.h>
 #include <stdio.h>

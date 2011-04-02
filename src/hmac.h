@@ -19,6 +19,7 @@
 using namespace v8;
 using namespace node;
 
+
 class Hmac: node::ObjectWrap {
   public:
     static Persistent<FunctionTemplate> constructor;

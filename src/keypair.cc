@@ -104,6 +104,7 @@ Handle<Value> KeyPair::New_RSA_KeyPair(const Arguments &args) {
 }
 
 Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
+#ifndef WITH_ECDSA
   HandleScope scope;
   EC_KEY *eckey = EC_KEY_new();
   ASSERT_IS_STRING_OR_BUFFER(args[0]); 
@@ -179,9 +180,14 @@ Handle<Value> KeyPair::New_ECDSA_KeyPair(const Arguments &args) {
   EC_KEY_free(eckey);
   EC_GROUP_free(ecgroup);
   return scope.Close(o);
+#else
+  return ThrowException(Exception::Error(String::New("Bindings built without ECDSA support")));
+#endif
+
 }
 
 Handle<Value> KeyPair::Parse_ECDSA_KeyPair(const Arguments &args) {
+#ifndef WITH_ECDSA
   HandleScope scope;
   
   char *body;
@@ -257,6 +263,9 @@ Handle<Value> KeyPair::Parse_ECDSA_KeyPair(const Arguments &args) {
   EC_KEY_free(ec);
   
   return scope.Close(o);
+#else
+  return ThrowException(Exception::Error(String::New("Bindings built without ECDSA support")));
+#endif
 }
 
 Handle<Value> KeyPair::Parse_RSA_KeyPair(const Arguments &args) {
