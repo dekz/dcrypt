@@ -20,17 +20,14 @@ def configure(conf):
   conf.check_tool("node_addon")
   o = Options.options
   if Options.options.without_ecdsa:
-    print 'without ecdsa'
+    print 'Configuring Dcrypt to skip bindings on ECDSA'
     conf.env["WITHOUT_ECDSA"] = True
     conf.env.append_value("CXXFLAGS", "-DWITH_ECDSA=0")
 
 def build(bld):
   obj = bld.new_task_gen("cxx", "shlib", "node_addon")
   obj.target = 'dcrypt'
-  #obj.source = bld.glob('src/*.cc')
   obj.find_sources_in_dirs("src")
-  if Options.options.without_ecdsa:
-    print 'building without ECDSA bindings'
   if bld.env["WITHOUT_ECDSA"]:
-    print 'building without ecdsa 2'
+    print 'Building Dcrypt without ECDSA support'
   
