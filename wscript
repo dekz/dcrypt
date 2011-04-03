@@ -19,7 +19,7 @@ def configure(conf):
   conf.check_tool("compiler_cxx")
   conf.check_tool("node_addon")
   o = Options.options
-  if Options.options.without_ecdsa:
+  if Options.options.without_ecdsa or not conf.check(header_name='openssl/ecdsa.h', compile_mode='cxx'):
     print 'Configuring Dcrypt to skip bindings on ECDSA'
     conf.env["WITHOUT_ECDSA"] = True
     conf.env.append_value("CXXFLAGS", "-DWITH_ECDSA=0")
