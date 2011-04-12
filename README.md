@@ -31,10 +31,12 @@ Install
 Usage
 -----
 Create a buffer holding 16 bytes of random data:
+
     buffer = dcrypt.random.randomBytes(16)
     >> <Buffer 46 65 82 15 c9 db 20 2d ea 2c fc 4c a2 0b 62 6a>
 
 Create a new RSA Key Pair - no params is 1024 bytes and 65537 exponent default
+
     rsa = new dcrypt.keypair.newRSA(1024, 65537)
     >> { pem_pub: '-----BEGIN RSA PUBLIC KEY-----\nMIGJAoGBAL3oiAw++hlc1Fo5hgph7uzawpP7H394VrL/UQ5eX96dSD+xznd4HHBH\niv1ev8g7xIdsSCWa2xQ8xsSMiUawWiOp3ioC35xLWzmLthDxY9+WPVSE6XNCODda\njlJ8xmQdoKKy2y1Hd5407SDXiLoBelpx5xgMIA7qLBUX1UmYGxchAgMBAAE=\n-----END RSA PUBLIC KEY-----',
     ...
