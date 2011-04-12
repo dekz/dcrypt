@@ -42,31 +42,37 @@ Create a new RSA Key Pair - no params is 1024 bytes and 65537 exponent default
     ...
 
 Create a new ECDSA Key Pair - no params is default secp256k1 curve
+
     ecdsa = new dcrypt.keypair.newECDSA('secp256k1')
     >> { pem_pub: '-----BEGIN PUBLIC KEY-----\nMIH1MIGuBgcqhkjOPQIBMIGiAgEBMCwGByqGSM49AQECIQD/////////////////\n///////////////////+///8LzAGBAEABAEHBEEEeb5mfvncu6xVoGKVzocLBwKb\n/NstzijZWfKBWxb4F5hIOtp3JqPEZV2k+/wOEQio/Re0SKaFVBmcR9CP+xDUuAIh\nAP////////////////////66rtzmr0igO7/SXozQNkFBAgEBA0IABEi6/jVsROmi\nZGQPulg4uW4//uru4oMtEt5O7KrAtvlGd9cRcCB2CO6DM98hz3QSRvmqa5hl4P1N\nV4+C0CUFDLI=\n-----END PUBLIC KEY-----'
     ...
 
 Verify a signature with just a public key in PEM format
+
     verified = verifer.verify(pem_public, signature, signature_format='hex')
     >> true
 
 Encrypt and Decrypt with RSA
+
     enc = dcrypt.rsa.encrypt(pub, 'Hi there RSA', 'RSA_PKCS1_PADDING', 'hex')
     clear_msg = dcrypt.rsa.decrypt(priv, enc, 'RSA_PKCS1_PADDING', 'hex')
     >> 'Hi there RSA'
     
 Encrypt a message with AES and a phrase
+
     cipher = dcrypt.cipher.createCipher('AES-256-cbc')
     ciphertext = cipher.update('Hello there', 'utf8', 'hex')
     ciphertext += cipher.final('hex')
 
 Decrypt a message with AES and a phrase
+
     decipher = dcrypt.decipher.createDecipher('AES-256-cbc')
     cleartext = cipher.update(ciphertext, 'hex', 'utf8')
     cleartext += cipher.final('utf8')
     >> 'Hello there'
 
 Parse a RSA private key file and generate primitives
+
     keypair.parseRSA(fs.readFileSync('/path/to/rsa.priv'), false)
     >> { pub:
          { n: 'BA5570689BDA43E4DBCE11DD9F33251C0B0E19B52D1B5BB6AEEA6C9EA09543BCC0ACC0DEAF1E416DB2B6E466A6C063FEE2DB7914EFD2B02765999D0D7AED119392AD65CD994195DE7D92B241CA588508BAFA12819F4037F6C7F71E77D2D66B2B9ECE9D2502AB65AB3C5B5D27613F9CA7E067C4496B9B881A62FACC6F68494341',
