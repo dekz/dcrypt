@@ -51,8 +51,8 @@ testSign = (test) ->
   message = 'this is a test message'
 
   keys = dcrypt.keypair.newRSA(1024)
-  pub = keys.pem_pub.toString()
-  priv = keys.pem_priv.toString()
+  pub = keys.pem_pub
+  priv = keys.pem_priv
 
   nsigner = crypto.createSign algo
   nsigner.update message
@@ -150,11 +150,11 @@ testIssue7_ecdsa_sha1 = (test) ->
   keys = dcrypt.keypair.newECDSA()
   s = dcrypt.sign.createSign("SHA1")
   s.update('test message')
-  signature = s.sign(keys.pem_priv.toString(), output='hex')
+  signature = s.sign(keys.pem_priv, output='hex')
 
   v = dcrypt.verify.createVerify("SHA1")
   v.update('test message')
-  passed = v.verify(keys.pem_pub.toString(), signature, signature_format='hex')
+  passed = v.verify(keys.pem_pub, signature, signature_format='hex')
   test.same(passed, true, 'ECDSA Signature Verification failed')
   test.done()
 
