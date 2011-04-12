@@ -12,20 +12,20 @@ testRandBytes = (test) ->
   test.expect 3
   r = dcrypt.random.randomBytes size 
   test.equal "object", typeof r
-  test.notEqual r, []
-  test.equal size, r.length
+  test.notEqual r, [], 'Random bytes are empty'
+  test.equal size, r.length, 'Size does not match expected size'
   test.done()
 
 testKeyPairs = (test) ->
   test.expect(8)
-  test.notDeepEqual(dcrypt.keypair.newRSA(), {})
-  test.notDeepEqual(dcrypt.keypair.newRSA(1024))
-  test.notDeepEqual(dcrypt.keypair.newRSA(2048, 3), {})
-  test.throws(dcrypt.keypair.newRSA(2048, 3))
+  test.notDeepEqual(dcrypt.keypair.newRSA(), {}, 'Keypair is empty')
+  test.notDeepEqual(dcrypt.keypair.newRSA(1024), {}, 'Keypair is empty')
+  test.notDeepEqual(dcrypt.keypair.newRSA(2048, 3), {}, 'Keypair is empty')
+  test.throws(dcrypt.keypair.newRSA(2048, 3), 'Creating a bad RSA keypair should throw an error')
 
-  test.notDeepEqual(dcrypt.keypair.newECDSA(), {})
-  test.notDeepEqual(dcrypt.keypair.newECDSA('prime192v1'), {})
-  test.notDeepEqual(dcrypt.keypair.newECDSA('prime256v1'), {})
+  test.notDeepEqual(dcrypt.keypair.newECDSA(), {}, 'Keypair is empty')
+  test.notDeepEqual(dcrypt.keypair.newECDSA('prime192v1'), {}, 'Keypair is empty')
+  test.notDeepEqual(dcrypt.keypair.newECDSA('prime256v1'), {}, 'Keypair is empty')
   #for some reason nodeunit wont treat test.throws as working with newECDSA with a bad curve
   try
     dcrypt.keypair.newECDSA('1234')
@@ -43,7 +43,7 @@ testHash = (test)  ->
   x.update('test')
   hash2 = x.digest(encoding='hex')
 
-  test.deepEqual hash1, hash2
+  test.deepEqual hash1, hash2, 'Digest Interop failure'
   test.done()
 
 testSign = (test) ->
@@ -61,7 +61,7 @@ testSign = (test) ->
   signer = dcrypt.sign.createSign algo
   signer.update message
   sig = signer.sign priv, output_format='hex'
-  test.deepEqual nsig, sig
+  test.deepEqual nsig, sig, 'RSA Signature Interop failure'
 
   nverif = crypto.createVerify algo
   nverif.update message
@@ -70,12 +70,12 @@ testSign = (test) ->
   dverif = dcrypt.verify.createVerify algo
   dverif.update message
   dpass = dverif.verify(pub, nsig, signature_format='hex')
-  test.ok dpass
+  test.same true, dpass, 'RSA signature should have been verified'
 
   dverif2 = dcrypt.verify.createVerify algo
   dverif2.update message
   dpass = dverif2.verify(pub, 'bad sig', signature_format='hex')
-  test.ok !dpass
+  test.same false, dpass, 'Signature verification should have failed'
 
   keys = dcrypt.keypair.newECDSA()
   signer = dcrypt.sign.createSign "SHA1"
@@ -85,9 +85,9 @@ testSign = (test) ->
   ecverif = dcrypt.verify.createVerify "SHA1"
   ecverif.update message
   ecpass = ecverif.verify(keys.pem_pub, ecsig, signature_format='hex') 
-  test.ok ecpass
+  test.same true, ecpass, 'ECDSA signature verification failure'
 
-  test.notDeepEqual sig, ecsig
+  test.notDeepEqual sig, ecsig, 'Signatures should not be the same'
   test.done()
 
 testCipher = (test) ->
@@ -105,7 +105,7 @@ testCipher = (test) ->
   mt = ndecipher.update(ct, 'hex', 'utf8')
   mt += ndecipher.final('utf8')
 
-  test.deepEqual(mt, message)
+  test.deepEqual(mt, message, 'Cipher encrypt and decrypt Interop failure')
 
   #reuse
   cipher.init(algo, key)
@@ -116,9 +116,9 @@ testCipher = (test) ->
   clear = decipher.update(ct2, 'hex', 'utf8')
   clear += decipher.final('utf8')
 
-  test.deepEqual(clear, message)
+  test.deepEqual(clear, message, 'Cipher encrypt and decrypt equal failure')
 
-  test.deepEqual(ct, ct2)
+  test.deepEqual(ct, ct2, 'Reuse of cipher object failure')
   test.done()
 
 testRSAEncrypt = (test) ->
@@ -129,7 +129,7 @@ testRSAEncrypt = (test) ->
 
   enc = dcrypt.rsa.encrypt(pub, message, 'RSA_PKCS1_PADDING', 'hex')
   clear_msg = dcrypt.rsa.decrypt(priv, enc, 'RSA_PKCS1_PADDING', 'hex')
-  test.deepEqual clear_msg, message
+  test.deepEqual clear_msg, message, 'RSA with PKCS1 PADDING encryption and decryption failure'
   test.done()
 
 testHMAC = (test) ->
@@ -143,9 +143,22 @@ testHMAC = (test) ->
   dhm.update message
   d_msg = dhm.digest('hex')
 
-  test.deepEqual d_msg, n_msg
+  test.deepEqual d_msg, n_msg, 'HMAC Interop equal failure'
   test.done()
 
+testIssue7_ecdsa_sha1 = (test) ->
+  keys = dcrypt.keypair.newECDSA()
+  s = dcrypt.sign.createSign("SHA1")
+  s.update('test message')
+  signature = s.sign(keys.pem_priv, output='hex')
+
+  v = dcrypt.verify.createVerify("SHA1")
+  v.update('test message')
+  passed = v.verify(keys.pem_pub, signature, signature_format='hex')
+  test.same(passed, true, 'ECDSA Signature Verification failed')
+  test.done()
+
+exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
 exports.testKeyPairs = testKeyPairs
 exports.testRandomBytes = testRandBytes
 exports.testHash = testHash
