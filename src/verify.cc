@@ -104,13 +104,11 @@ int Verify::VerifyUpdate(char* data, int len) {
   if (!initialised_) return 0;
   int ok = EVP_VerifyUpdate(mdctx, data, len);
   if (!ok) {
-      ThrowException(Exception::Error(String::New("Problem performing SignFinal")));
+      ThrowException(Exception::Error(String::New("Problem performing VerifyUpdate")));
     
   }
   return 1;
 }
-
-
 
 Handle<Value> Verify::VerifyFinal(const Arguments& args) {
   HandleScope scope;
