@@ -57,6 +57,11 @@ int Sign::SignFinal(unsigned char **md_value, unsigned int *md_len, char *key_pe
   if (pkey == NULL) {
     return 0;
   }
+  EVP_PKEY_CTX *pk_ctx = NULL;
+  pk_ctx = EVP_PKEY_CTX_new(pkey, NULL);
+  if (!pk_ctx) {
+    fprintf(stderr, "Couldn't create a pk ctx from pkey\n");
+  }
 
   int ok = EVP_SignFinal(mdctx, *md_value, md_len, pkey); 
   if (!ok) {
