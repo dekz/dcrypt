@@ -156,18 +156,24 @@ testIssue7_ecdsa_sha1 = (test) ->
   s = dcrypt.sign.createSign("SHA1")
   s.update('test message')
   signature = s.sign(keys.pem_priv, output='hex')
-  console.log signature
 
   node_s = crypto.createSign("SHA1")
   node_s.update('test message')
   node_sig = node_s.sign(keys.pem_priv, output='hex')
-  console.log node_sig
+
+  test.notDeepEqual(signature, '', 'ECDSA Signature from Dcrypt should not be empty')
+  test.notDeepEqual(node_sig, '', 'ECDSA signature from node_crypto should not be empty')
 
   v = dcrypt.verify.createVerify("SHA1")
   v.update('test message')
   passed = v.verify(keys.pem_pub, signature, signature_format='hex')
   test.done()
 
+testKAT_sign = (test) ->
+  test.done()
+
+
+exports.testKAT_sign = testKAT_sign
 exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
 exports.testKeyPairs = testKeyPairs
 exports.testRandomBytes = testRandBytes
