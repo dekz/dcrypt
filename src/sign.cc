@@ -53,20 +53,13 @@ int Sign::SignFinal(unsigned char **md_value, unsigned int *md_len, char *key_pe
   bp = BIO_new(BIO_s_mem());
   if(!BIO_write(bp, key_pem, key_pemLen)) return 0;
 
-  pkey = PEM_read_bio_PrivateKey(bp, NULL, 0, NULL);
+  pkey = PEM_read_bio_PrivateKey(bp, NULL, NULL, NULL);
   if (pkey == NULL) {
     return 0;
   }
-  EVP_PKEY_CTX *pk_ctx = NULL;
-  pk_ctx = EVP_PKEY_CTX_new(pkey, NULL);
-  if (!pk_ctx) {
-    fprintf(stderr, "Couldn't create a pk ctx from pkey\n");
-  }
 
-  int ok = EVP_SignFinal(mdctx, *md_value, md_len, pkey); 
-  if (!ok) {
-    return 0;
-  }
+  EVP_SignFinal(mdctx, *md_value, md_len, pkey); 
+
   EVP_MD_CTX_cleanup(mdctx);
   initialised_ = false;
   EVP_PKEY_free(pkey);

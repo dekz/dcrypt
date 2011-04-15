@@ -151,6 +151,12 @@ testIssue7_ecdsa_sha1 = (test) ->
   s = dcrypt.sign.createSign("SHA1")
   s.update('test message')
   signature = s.sign(keys.pem_priv, output='hex')
+  console.log signature
+
+  node_s = crypto.createSign("SHA1")
+  node_s.update('test message')
+  node_sig = node_s.sign(keys.pem_priv, output='hex')
+  console.log node_sig
 
   v = dcrypt.verify.createVerify("SHA1")
   v.update('test message')
