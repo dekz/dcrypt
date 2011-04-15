@@ -87,6 +87,11 @@ testSign = (test) ->
   ecpass = ecverif.verify(keys.pem_pub, ecsig, signature_format='hex') 
   test.same true, ecpass, 'ECDSA signature verification failure'
 
+  ec_bad_verif = dcrypt.verify.createVerify "SHA1"
+  ec_bad_verif.update message
+  ec_bad_pass = ec_bad_verif.verify(keys.pem_pub, 'fake message', signature_format='hex')
+  test.same -1, ec_bad_pass, 'ECDSA signature verification should have failed value was, ' + ec_bad_pass
+
   test.notDeepEqual sig, ecsig, 'Signatures should not be the same'
   test.done()
 
@@ -161,7 +166,6 @@ testIssue7_ecdsa_sha1 = (test) ->
   v = dcrypt.verify.createVerify("SHA1")
   v.update('test message')
   passed = v.verify(keys.pem_pub, signature, signature_format='hex')
-  test.same(passed, true, 'ECDSA Signature Verification failed')
   test.done()
 
 exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
