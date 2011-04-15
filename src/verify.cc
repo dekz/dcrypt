@@ -220,7 +220,7 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   EVP_PKEY_free (pkey);
 
   if (r != 1) {
-    //ERR_print_errors_fp (stderr);
+    ERR_print_errors_fp (stderr);
   }
   X509_free(x509);
   BIO_free(bp);

@@ -89,3 +89,7 @@ Configure Options
 -----
 Build without ECDSA bindings
     node-waf configure --without-ecdsa=true
+
+INFO
+-----
+Use OpenSSL 1.0.0

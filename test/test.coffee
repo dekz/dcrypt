@@ -170,15 +170,30 @@ testIssue7_ecdsa_sha1 = (test) ->
   test.done()
 
 testKAT_sign = (test) ->
+  ec_param_1_signature = fs.readFileSync('test/kat/ec/ec_param_1_message.sha1').toString()
+  ec_param_1_message = fs.readFileSync('test/kat/ec/ec_param_1_message').toString()
+  ec_param_1_priv_pem = fs.readFileSync('test/kat/ec/ec_param_1_priv.pem').toString()
+  ec_param_1_pub_pem = fs.readFileSync('test/kat/ec/ec_param_1_pub.pem').toString()
+  console.log ec_param_1_message
+  console.log ec_param_1_signature
+  console.log ec_param_1_priv_pem
+  console.log ec_param_1_pub_pem
+
+  ec_param_1_verifer = dcrypt.verify.createVerify('SHA1')
+  ec_param_1_verifer.update ec_param_1_message
+  ec_param_1_status = ec_param_1_verifer.verify(ec_param_1_pub_pem, ec_param_1_signature, signature_format='binary')
+  test.same true, ec_param_1_status
+  console.log ec_param_1_status
+
   test.done()
 
 
 exports.testKAT_sign = testKAT_sign
-exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
-exports.testKeyPairs = testKeyPairs
-exports.testRandomBytes = testRandBytes
-exports.testHash = testHash
-exports.testSign = testSign
-exports.testCipher = testCipher
-exports.testRSAEncrypt = testRSAEncrypt
-exports.testHMAC = testHMAC
+#exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
+#exports.testKeyPairs = testKeyPairs
+#exports.testRandomBytes = testRandBytes
+#exports.testHash = testHash
+#exports.testSign = testSign
+#exports.testCipher = testCipher
+#exports.testRSAEncrypt = testRSAEncrypt
+#exports.testHMAC = testHMAC
