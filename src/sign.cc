@@ -55,6 +55,7 @@ int Sign::SignFinal(unsigned char **md_value, unsigned int *md_len, char *key_pe
 
   pkey = PEM_read_bio_PrivateKey(bp, NULL, NULL, NULL);
   if (pkey == NULL) {
+    fprintf(stderr, "SignFinal: Unable to load public key");
     return 0;
   }
 

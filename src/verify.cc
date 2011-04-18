@@ -153,7 +153,8 @@ Handle<Value> Verify::VerifyFinal(const Arguments& args) {
       // Hex encoding
       HexDecode(hbuf, hlen, (char **)&dbuf, &dlen);
       r = verify->VerifyFinal(kbuf, klen, dbuf, dlen);
-      delete [] dbuf;
+       // r = verify->VerifyFinal(kbuf, klen, hbuf, hlen);
+       delete [] dbuf;
     } else if (strcasecmp(*encoding, "base64") == 0) {
       // Base64 encoding
       unbase64(hbuf, hlen, (char **)&dbuf, &dlen);
@@ -179,50 +180,90 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   BIO *bp = NULL;
   EVP_PKEY* pkey = EVP_PKEY_new();
 
-  bp = BIO_new(BIO_s_mem());
-  if(!BIO_write(bp, key_pem, key_pemLen)) return 0;
+  // bp = BIO_new(BIO_s_mem());
+  // if(!BIO_write(bp, key_pem, key_pemLen)) return 0;
   
-  X509 *x509 = NULL;
-  X509_free(x509);
-  x509 = PEM_read_bio_X509(bp, NULL, 0, NULL);
-  if (x509==NULL) {
+  // X509 *x509 = NULL;
+  // X509_free(x509);
+  // x509 = PEM_read_bio_X509(bp, NULL, 0, NULL);
+  // EC_KEY *ec_key = NULL;
+  // if (x509==NULL) {
+  //   //Trying to read in the cert failed, try RSA
+  //   BIO *test2 = NULL;
+  //   RSA *rsa_pub = RSA_new();
+  //   test2 = BIO_new(BIO_s_mem());
+  //   if(!BIO_write(test2, key_pem, key_pemLen)) return 0;
 
-    BIO *test2 = NULL;
-    RSA *rsa_pub = RSA_new();
-    test2 = BIO_new(BIO_s_mem());
-    if(!BIO_write(test2, key_pem, key_pemLen)) return 0;
+  //   //TODO rewrite to be less suck
+  //   rsa_pub = PEM_read_bio_RSAPublicKey(test2, NULL, NULL, 0);
+  //   if (rsa_pub) {
+  //     EVP_PKEY_set1_RSA(pkey, rsa_pub);
+  //     RSA_free(rsa_pub);
+  //     BIO_free(test2);
+  //   } else {
+  //     //RSA failed, try ec
+  //     ERR_print_errors_fp(stderr);
+  //     BIO *test = NULL;
+  //     // test = BIO_new(BIO_s_mem());
+  //     test = BIO_new_mem_buf(key_pem, key_pemLen);
+  //     // if(!BIO_write(test, key_pem, key_pemLen)) return 0;
+  //     // pkey = PEM_read_bio_PUBKEY(test, NULL, NULL, 0);
+  //     ec_key = PEM_read_bio_EC_PUBKEY(test, NULL, NULL, NULL);
+  //     int ok = EVP_PKEY_set1_EC_KEY(pkey, ec_key);
+  //     BIO_free(test);
+  //     if (!pkey || ok != 1) {
+  //       ERR_print_errors_fp(stderr);
+  //       fprintf(stderr, "Dcrypt couldn't handle this verification pem public key");
+  //     }
+  //   }
+  // } else {
+  //   pkey=X509_get_pubkey(x509);
+  // }
+  //
 
-    rsa_pub = PEM_read_bio_RSAPublicKey(test2, NULL, NULL, 0);
-    if (rsa_pub) {
+  bp = BIO_new_mem_buf(key_pem, key_pemLen);
+  // EC_KEY *ec_key = PEM_read_bio_EC_PUBKEY(bp, NULL, NULL, NULL);
+  // int ok = EVP_PKEY_set1_EC_KEY(pkey, ec_key);
+
+  RSA *rsa_pub;
+  ERR_print_errors_fp(stderr);
+  pkey = PEM_read_bio_PUBKEY(bp, NULL, NULL, NULL);
+  if (pkey==NULL) {
+    pkey = EVP_PKEY_new();
+    bp = BIO_new_mem_buf(key_pem, key_pemLen);
+    rsa_pub = RSA_new();
+    rsa_pub = PEM_read_bio_RSAPublicKey(bp, NULL, NULL, NULL);
+    if (rsa_pub == NULL) {
+      RSA_free(rsa_pub);
+      //RSA failed, try something else
+      EC_KEY *eckey = EC_KEY_new();
+      eckey = PEM_read_bio_EC_PUBKEY(bp, NULL, NULL, NULL);
+      if (!eckey) {
+        EC_KEY_free(eckey);
+        fprintf(stderr, "EC KEY reading failed \n");
+      } else {
+        fprintf(stderr, "EC KEY LOADING WORKED!\n");
+      }
+    } else {
+      //RSA worked set it up and drop down
+      fprintf(stderr, "Loaded RSA public key\n");
       EVP_PKEY_set1_RSA(pkey, rsa_pub);
       RSA_free(rsa_pub);
-      BIO_free(test2);
-    } else {
-      BIO *test = NULL;
-      test = BIO_new(BIO_s_mem());
-      if(!BIO_write(test, key_pem, key_pemLen)) return 0;
-      pkey = PEM_read_bio_PUBKEY(test, NULL, NULL, 0);
-      BIO_free(test);
-      if (!pkey) {
-        fprintf(stderr, "Dcrypt couldn't handle this verification pem public key");
-      }
     }
-  } else {
-    pkey=X509_get_pubkey(x509);
-  }
 
-  if (pkey==NULL) {
-    fprintf(stderr, "pub key is null\n");
-    return 0;
+    fprintf(stderr, "VerifyFinal: Unable to load Public Key\n");
+    ERR_print_errors_fp(stderr);
+    // return 0;
   }
 
   int r = EVP_VerifyFinal(mdctx, sig, siglen, pkey);
-  EVP_PKEY_free (pkey);
 
   if (r != 1) {
-    ERR_print_errors_fp (stderr);
+    fprintf(stderr, "VerifyFinal: Signature not verified %d\n", pkey->type);
+    ERR_print_errors_fp(stderr);
   }
-  X509_free(x509);
+
+  EVP_PKEY_free(pkey);
   BIO_free(bp);
   EVP_MD_CTX_cleanup(mdctx);
   initialised_ = false;

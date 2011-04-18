@@ -81,7 +81,7 @@ Handle<Value> KeyPair::New_RSA_KeyPair(const Arguments &args) {
   delete [] buff;
 
   //Get the private key in PEM format
-  //rsaBIO = BIO_new(BIO_s_mem());
+  // rsaBIO = BIO_new(BIO_s_mem());
   ok = PEM_write_bio_RSAPrivateKey(rsaBIO, rsa, NULL, NULL, 0, NULL, NULL);
   if (!ok) {
     return ThrowException(Exception::Error(String::New("Error getting PEM format of RSA Private Key")));

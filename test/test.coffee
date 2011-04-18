@@ -172,6 +172,7 @@ testIssue7_ecdsa_sha1 = (test) ->
   test.same true, passed, 'ECDSA Signature should have passed'
   test.done()
 
+#OpenSSL doesn't output a form in which OpenSSL likes to read
 testKAT_sign = (test) ->
   #RSA KAT
   rsa_1_signature = fs.readFileSync('test/kat/rsa/message.bin.sha1')
