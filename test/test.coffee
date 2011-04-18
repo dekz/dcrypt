@@ -243,6 +243,7 @@ testNodeCryptoFixtures = (test) ->
                           .verify(certPem, s1, 'base64')
   test.same true, verified, 'Node Crypto Signing Test with Cert failed - base64'
 
+   #binary
   s1 = dcrypt.sign.createSign('RSA-SHA1')
              .update('Test123')
              .sign(keyPem, 'binary')
@@ -252,10 +253,10 @@ testNodeCryptoFixtures = (test) ->
                           .verify(certPem, s1, 'binary')
   test.same true, verified, 'Node Crypto Signing Test with Cert failed - binary'
 
-  a0 = crypto.createHash('sha1').update('Test123').digest('hex')
-  a1 = crypto.createHash('md5').update('Test123').digest('binary')
-  a2 = crypto.createHash('sha256').update('Test123').digest('base64')
-  a3 = crypto.createHash('sha512').update('Test123').digest() #binary
+  a0 = dcrypt.hash.createHash('sha1').update('Test123').digest('hex')
+  a1 = dcrypt.hash.createHash('md5').update('Test123').digest('binary')
+  a2 = dcrypt.hash.createHash('sha256').update('Test123').digest('base64')
+  a3 = dcrypt.hash.createHash('sha512').update('Test123').digest() #binary
 
   test.deepEqual(a0, '8308651804facb7b9af8ffc53a33a22d6a1c8ac2', 'Test SHA1')
   test.deepEqual(a1, 'h\u00ea\u00cb\u0097\u00d8o\fF!\u00fa+\u000e\u0017\u00ca' +
