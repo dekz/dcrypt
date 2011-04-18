@@ -221,14 +221,13 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   // }
   //
 
-  bp = BIO_new_mem_buf(key_pem, key_pemLen);
   // EC_KEY *ec_key = PEM_read_bio_EC_PUBKEY(bp, NULL, NULL, NULL);
   // int ok = EVP_PKEY_set1_EC_KEY(pkey, ec_key);
+  bp = BIO_new_mem_buf(key_pem, key_pemLen);
 
-  RSA *rsa_pub;
-  ERR_print_errors_fp(stderr);
   pkey = PEM_read_bio_PUBKEY(bp, NULL, NULL, NULL);
   if (pkey==NULL) {
+    RSA *rsa_pub;
     pkey = EVP_PKEY_new();
     bp = BIO_new_mem_buf(key_pem, key_pemLen);
     rsa_pub = RSA_new();
@@ -236,6 +235,7 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
     if (rsa_pub == NULL) {
       RSA_free(rsa_pub);
       //RSA failed, try something else
+      //It seems ECDSA is always satisifed in PEM_read_bio_PUBKEY
       EC_KEY *eckey = EC_KEY_new();
       eckey = PEM_read_bio_EC_PUBKEY(bp, NULL, NULL, NULL);
       if (!eckey) {
@@ -246,22 +246,19 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
       }
     } else {
       //RSA worked set it up and drop down
-      fprintf(stderr, "Loaded RSA public key\n");
       EVP_PKEY_set1_RSA(pkey, rsa_pub);
       RSA_free(rsa_pub);
     }
+  }
 
-    fprintf(stderr, "VerifyFinal: Unable to load Public Key\n");
+  if (pkey==NULL) {
+    //give up
+    BIO_free(bp);
     ERR_print_errors_fp(stderr);
-    // return 0;
+    return 0;
   }
 
   int r = EVP_VerifyFinal(mdctx, sig, siglen, pkey);
-
-  if (r != 1) {
-    fprintf(stderr, "VerifyFinal: Signature not verified %d\n", pkey->type);
-    ERR_print_errors_fp(stderr);
-  }
 
   EVP_PKEY_free(pkey);
   BIO_free(bp);
@@ -269,8 +266,6 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   initialised_ = false;
   return r;
 }
-
-
 
 Verify::Verify() : ObjectWrap() {
   initialised_ = false;

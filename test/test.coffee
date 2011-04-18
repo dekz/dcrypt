@@ -4,9 +4,11 @@ crypto = require 'crypto'
 assert = require 'assert'
 fs = require 'fs'
 
-console.log "Entering test.coffee"
 console.log dcrypt
 
+#
+# Random Byte Generation Tests
+#
 testRandBytes = (test) ->
   size = 16
   test.expect 3
@@ -16,6 +18,9 @@ testRandBytes = (test) ->
   test.equal size, r.length, 'Size does not match expected size'
   test.done()
 
+#
+# Keypair Generation Tests
+#
 testKeyPairs = (test) ->
   test.expect(8)
   test.notDeepEqual(dcrypt.keypair.newRSA(), {}, 'Keypair is empty')
@@ -96,6 +101,10 @@ testSign = (test) ->
   test.notDeepEqual sig, ecsig, 'Signatures should not be the same'
   test.done()
 
+
+#
+# Cipher Tests
+#
 testCipher = (test) ->
   key = 'Test key here'
   message = 'This is the test message!'
@@ -127,6 +136,9 @@ testCipher = (test) ->
   test.deepEqual(ct, ct2, 'Reuse of cipher object failure')
   test.done()
 
+#
+# RSA Encrypt/Decrypt Tests
+#
 testRSAEncrypt = (test) ->
   key = dcrypt.keypair.newRSA()
   pub = key.pem_pub
@@ -138,6 +150,9 @@ testRSAEncrypt = (test) ->
   test.deepEqual clear_msg, message, 'RSA with PKCS1 PADDING encryption and decryption failure'
   test.done()
 
+#
+# HMAC Tests
+#
 testHMAC = (test) ->
   key = 'test key'
   message = 'message for me and you'
@@ -152,6 +167,11 @@ testHMAC = (test) ->
   test.deepEqual d_msg, n_msg, 'HMAC Interop equal failure'
   test.done()
 
+#
+# Issue 7
+# Linux failing on ECDSA signatures, versions less than 1.0.0
+# Dcrypt would return an empty string as there was a failure on EVP_VerifyFinal
+#
 testIssue7_ecdsa_sha1 = (test) ->
   keys = dcrypt.keypair.newECDSA()
 
@@ -160,8 +180,8 @@ testIssue7_ecdsa_sha1 = (test) ->
                     .sign(keys.pem_priv, 'hex')
 
   node_sig = crypto.createSign('SHA1')
-                  .update('test message')
-                  .sign(keys.pem_priv, 'hex')
+                   .update('test message')
+                   .sign(keys.pem_priv, 'hex')
 
   test.notDeepEqual(signature, '', 'ECDSA Signature from Dcrypt should not be empty')
   test.notDeepEqual(node_sig, '', 'ECDSA signature from node_crypto should not be empty')
@@ -172,6 +192,9 @@ testIssue7_ecdsa_sha1 = (test) ->
   test.same true, passed, 'ECDSA Signature should have passed'
   test.done()
 
+#
+# KAT Tests
+#
 #OpenSSL doesn't output a form in which OpenSSL likes to read
 testKAT_sign = (test) ->
   #RSA KAT
@@ -200,7 +223,9 @@ testKAT_sign = (test) ->
 
   test.done()
 
-
+#
+# Exports
+#
 #exports.testKAT_sign = testKAT_sign
 exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
 exports.testKeyPairs = testKeyPairs
