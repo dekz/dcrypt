@@ -35,63 +35,64 @@ testKeyPairs = (test) ->
   test.done()
 
 testHash = (test)  ->
-  h = dcrypt.hash.createHash("SHA256")
-  h.update('test')
-  hash1= h.digest(encoding='hex')
+  hash1 = dcrypt.hash.createHash('SHA256')
+                     .update('test')
+                     .digest('hex')
 
-  x = crypto.createHash("SHA256")
-  x.update('test')
-  hash2 = x.digest(encoding='hex')
+  hash2 = crypto.createHash('SHA256')
+                .update('test')
+                .digest('hex')
 
   test.deepEqual hash1, hash2, 'Digest Interop failure'
+  test.notDeepEqual hash1, '', 'Digest should not be empty'
   test.done()
 
 testSign = (test) ->
   algo = 'SHA256'
   message = 'this is a test message'
 
-  keys = dcrypt.keypair.newRSA(1024)
+  keys = dcrypt.keypair.newRSA()
   pub = keys.pem_pub
   priv = keys.pem_priv
 
-  nsigner = crypto.createSign algo
-  nsigner.update message
-  nsig = nsigner.sign priv, output_format='hex'
+  nsig = crypto.createSign(algo)
+               .update(message)
+               .sign(priv, 'hex')
 
-  signer = dcrypt.sign.createSign algo
-  signer.update message
-  sig = signer.sign priv, output_format='hex'
-  test.deepEqual nsig, sig, 'RSA Signature Interop failure'
+  npass = crypto.createVerify(algo)
+                .update(message)
+                .verify(pub, nsig, 'hex')
 
-  nverif = crypto.createVerify algo
-  nverif.update message
-  npass = nverif.verify(pub, nsig, signature_format='hex')
-
-  dverif = dcrypt.verify.createVerify algo
-  dverif.update message
-  dpass = dverif.verify(pub, nsig, signature_format='hex')
+  dpass = dcrypt.verify.createVerify(algo)
+                       .update(message)
+                       .verify(pub, nsig, 'hex')
   test.same true, dpass, 'RSA signature should have been verified'
 
-  dverif2 = dcrypt.verify.createVerify algo
-  dverif2.update message
-  dpass = dverif2.verify(pub, 'bad sig', signature_format='hex')
+  sig = dcrypt.sign.createSign(algo)
+                   .update(message)
+                   .sign(priv, 'hex')
+  test.deepEqual nsig, sig, 'RSA Signature Interop failure'
+
+  dpass = dcrypt.verify.createVerify(algo)
+                       .update(message)
+                       .verify(pub, 'bad sig', 'hex')
   test.same false, dpass, 'Signature verification should have failed'
 
   keys = dcrypt.keypair.newECDSA()
-  signer = dcrypt.sign.createSign "SHA1"
-  signer.update message
-  ecsig = signer.sign keys.pem_priv, output_format='hex'
 
-  ecverif = dcrypt.verify.createVerify "SHA1"
-  ecverif.update message
-  ecpass = ecverif.verify(keys.pem_pub, ecsig, signature_format='hex') 
+  ecsig = dcrypt.sign.createSign('SHA1')
+                     .update(message)
+                     .sign(keys.pem_priv, 'hex')
+
+  ecpass = dcrypt.verify.createVerify('SHA1')
+                        .update(message)
+                        .verify(keys.pem_pub, ecsig, 'hex')
   test.same true, ecpass, 'ECDSA signature verification failure'
 
-  ec_bad_verif = dcrypt.verify.createVerify "SHA1"
-  ec_bad_verif.update message
-  ec_bad_pass = ec_bad_verif.verify(keys.pem_pub, 'fake message', signature_format='hex')
-  test.same -1, ec_bad_pass, 'ECDSA signature verification should have failed value was, ' + ec_bad_pass
-
+  ec_bad_pass = dcrypt.verify.createVerify('SHA1')
+                             .update(message)
+                             .verify(keys.pem_pub, 'fake', 'hex')
+  test.same -1, ec_bad_pass, 'ECDSA signature verification should have failed '
   test.notDeepEqual sig, ecsig, 'Signatures should not be the same'
   test.done()
 
@@ -140,60 +141,71 @@ testRSAEncrypt = (test) ->
 testHMAC = (test) ->
   key = 'test key'
   message = 'message for me and you'
-  nhm = crypto.createHmac('sha256', key)
-  nhm.update message
-  n_msg = nhm.digest('hex')
 
-  dhm = dcrypt.hmac.createHmac('sha256', key)
-  dhm.update message
-  d_msg = dhm.digest('hex')
+  n_msg = crypto.createHmac('sha256', key)
+                .update(message)
+                .digest('hex')
 
+  d_msg = dcrypt.hmac.createHmac('sha256', key)
+                     .update(message)
+                     .digest('hex')
   test.deepEqual d_msg, n_msg, 'HMAC Interop equal failure'
   test.done()
 
 testIssue7_ecdsa_sha1 = (test) ->
   keys = dcrypt.keypair.newECDSA()
-  s = dcrypt.sign.createSign("SHA1")
-  s.update('test message')
-  signature = s.sign(keys.pem_priv, output='hex')
 
-  node_s = crypto.createSign("SHA1")
-  node_s.update('test message')
-  node_sig = node_s.sign(keys.pem_priv, output='hex')
+  signature = dcrypt.sign.createSign('SHA1')
+                    .update('test message')
+                    .sign(keys.pem_priv, 'hex')
+
+  node_sig = crypto.createSign('SHA1')
+                  .update('test message')
+                  .sign(keys.pem_priv, 'hex')
 
   test.notDeepEqual(signature, '', 'ECDSA Signature from Dcrypt should not be empty')
   test.notDeepEqual(node_sig, '', 'ECDSA signature from node_crypto should not be empty')
 
-  v = dcrypt.verify.createVerify("SHA1")
-  v.update('test message')
-  passed = v.verify(keys.pem_pub, signature, signature_format='hex')
+  passed = dcrypt.verify.createVerify('SHA1')
+                        .update('test message')
+                        .verify(keys.pem_pub, signature, 'hex')
+  test.same true, passed, 'ECDSA Signature should have passed'
   test.done()
 
 testKAT_sign = (test) ->
+  #RSA KAT
+  rsa_1_signature = fs.readFileSync('test/kat/rsa/message.bin.sha1')
+  rsa_1_message = fs.readFileSync('test/kat/rsa/message')
+  rsa_1_priv_pem = fs.readFileSync('test/kat/rsa/rsa_priv.pem')
+  rsa_1_pub_pem = fs.readFileSync('test/kat/rsa/rsa_pub.pem')
+  rsa_1_cert_pem = fs.readFileSync('test/kat/rsa/rsa_cert.pem')
+
+  rsa_1_status = dcrypt.verify.createVerify('RSA-SHA1')
+                       .update(rsa_1_message)
+                       .verify(rsa_1_cert_pem, rsa_1_signature, 'binary')
+  test.same true, rsa_1_status, "RSA KAT test should have passed"
+
+  #EC KAT
   ec_param_1_signature = fs.readFileSync('test/kat/ec/ec_param_1_message.sha1').toString()
   ec_param_1_message = fs.readFileSync('test/kat/ec/ec_param_1_message').toString()
   ec_param_1_priv_pem = fs.readFileSync('test/kat/ec/ec_param_1_priv.pem').toString()
   ec_param_1_pub_pem = fs.readFileSync('test/kat/ec/ec_param_1_pub.pem').toString()
-  console.log ec_param_1_message
-  console.log ec_param_1_signature
-  console.log ec_param_1_priv_pem
-  console.log ec_param_1_pub_pem
 
   ec_param_1_verifer = dcrypt.verify.createVerify('SHA1')
   ec_param_1_verifer.update ec_param_1_message
-  ec_param_1_status = ec_param_1_verifer.verify(ec_param_1_pub_pem, ec_param_1_signature, signature_format='binary')
-  test.same true, ec_param_1_status
+  ec_param_1_status = ec_param_1_verifer.verify(ec_param_1_pub_pem, ec_param_1_signature, 'hex')
+  test.same true, ec_param_1_status, "ECDSA KAT test should have been verified"
   console.log ec_param_1_status
 
   test.done()
 
 
-exports.testKAT_sign = testKAT_sign
-#exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
-#exports.testKeyPairs = testKeyPairs
-#exports.testRandomBytes = testRandBytes
-#exports.testHash = testHash
-#exports.testSign = testSign
-#exports.testCipher = testCipher
-#exports.testRSAEncrypt = testRSAEncrypt
-#exports.testHMAC = testHMAC
+#exports.testKAT_sign = testKAT_sign
+exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
+exports.testKeyPairs = testKeyPairs
+exports.testRandomBytes = testRandBytes
+exports.testHash = testHash
+exports.testSign = testSign
+exports.testCipher = testCipher
+exports.testRSAEncrypt = testRSAEncrypt
+exports.testHMAC = testHMAC
