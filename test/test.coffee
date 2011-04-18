@@ -270,6 +270,19 @@ testNodeCryptoFixtures = (test) ->
                  '\u00c2\u0006\u00da0\u00a1\u00879(G\u00ed\'',
              'Test SHA512 as assumed binary')
 
+  #CipherIvs
+  plaintext = 'Once more into the breach'
+  encryption_key = '0123456789abcd0123456789'
+  iv = '12345678'
+
+  cipher = crypto.createCipheriv('des-ede3-cbc', encryption_key, iv)
+  ciph = cipher.update(plaintext, 'utf8', 'hex')
+  ciph += cipher.final('hex')
+
+  decipher = crypto.createDecipheriv('des-ede3-cbc', encryption_key, iv)
+  txt = decipher.update(ciph, 'hex', 'utf8')
+  txt += decipher.final('utf8')
+  test.deepEqual(txt, plaintext, 'Encryption and decryption with IV should be equal')
 
   test.done()
 
