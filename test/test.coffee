@@ -224,9 +224,33 @@ testKAT_sign = (test) ->
   test.done()
 
 #
+# Node.js Crypto Tests
+#
+testNodeCryptoFixtures = (test) ->
+  fixtures = 'test/node/fixtures'
+  caPem = fs.readFileSync(fixtures + '/test_ca.pem', 'ascii')
+  certPem = fs.readFileSync(fixtures + '/test_cert.pem', 'ascii')
+  keyPem = fs.readFileSync(fixtures + '/test_key.pem', 'ascii')
+
+  #Signing/Verifying with Cert
+  s1 = dcrypt.sign.createSign('RSA-SHA1')
+             .update('Test123')
+             .sign(keyPem, 'base64')
+  verified = dcrypt.verify.createVerify('RSA-SHA1')
+                          .update('Test')
+                          .update('123')
+                          .verify(certPem, s1, 'base64')
+  test.same true, verified, 'Node Crypto Signing Test with Cert failed'
+  test.done()
+
+
+
+
+#
 # Exports
 #
 #exports.testKAT_sign = testKAT_sign
+exports.testNodeCryptoFixtures = testNodeCryptoFixtures
 exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
 exports.testKeyPairs = testKeyPairs
 exports.testRandomBytes = testRandBytes
