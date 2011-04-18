@@ -181,7 +181,7 @@ int Verify::VerifyFinal(char* key_pem, int key_pemLen, unsigned char* sig, int s
   EVP_PKEY* pkey = EVP_PKEY_new();
   bp = BIO_new_mem_buf(key_pem, key_pemLen);
   
-  //TODO rewrite to x509 -> RSA -> ECDSA
+  //TODO rewrite to PUBKEY -> x509 -> RSA -> ECDSA (faster)
   //TODO allow indication of type given to speed up process
   pkey = PEM_read_bio_PUBKEY(bp, NULL, NULL, NULL);
   if (pkey==NULL) {

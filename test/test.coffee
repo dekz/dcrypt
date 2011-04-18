@@ -233,6 +233,7 @@ testNodeCryptoFixtures = (test) ->
   keyPem = fs.readFileSync(fixtures + '/test_key.pem', 'ascii')
 
   #Signing/Verifying with Cert
+   #base 64
   s1 = dcrypt.sign.createSign('RSA-SHA1')
              .update('Test123')
              .sign(keyPem, 'base64')
@@ -240,7 +241,16 @@ testNodeCryptoFixtures = (test) ->
                           .update('Test')
                           .update('123')
                           .verify(certPem, s1, 'base64')
-  test.same true, verified, 'Node Crypto Signing Test with Cert failed'
+  test.same true, verified, 'Node Crypto Signing Test with Cert failed - base64'
+
+  s1 = dcrypt.sign.createSign('RSA-SHA1')
+             .update('Test123')
+             .sign(keyPem, 'binary')
+  verified = dcrypt.verify.createVerify('RSA-SHA1')
+                          .update('Test')
+                          .update('123')
+                          .verify(certPem, s1, 'binary')
+  test.same true, verified, 'Node Crypto Signing Test with Cert failed - binary'
   test.done()
 
 
