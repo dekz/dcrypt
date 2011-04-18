@@ -251,6 +251,25 @@ testNodeCryptoFixtures = (test) ->
                           .update('123')
                           .verify(certPem, s1, 'binary')
   test.same true, verified, 'Node Crypto Signing Test with Cert failed - binary'
+
+  a0 = crypto.createHash('sha1').update('Test123').digest('hex')
+  a1 = crypto.createHash('md5').update('Test123').digest('binary')
+  a2 = crypto.createHash('sha256').update('Test123').digest('base64')
+  a3 = crypto.createHash('sha512').update('Test123').digest() #binary
+
+  test.deepEqual(a0, '8308651804facb7b9af8ffc53a33a22d6a1c8ac2', 'Test SHA1')
+  test.deepEqual(a1, 'h\u00ea\u00cb\u0097\u00d8o\fF!\u00fa+\u000e\u0017\u00ca' +
+             '\u00bd\u008c', 'Test MD5 as binary')
+  test.deepEqual(a2, '2bX1jws4GYKTlxhloUB09Z66PoJZW+y+hq5R8dnx9l4=',
+             'Test SHA256 as base64')
+  test.deepEqual(a3, '\u00c1(4\u00f1\u0003\u001fd\u0097!O\'\u00d4C/&Qz\u00d4' +
+                 '\u0094\u0015l\u00b8\u008dQ+\u00db\u001d\u00c4\u00b5}\u00b2' +
+                 '\u00d6\u0092\u00a3\u00df\u00a2i\u00a1\u009b\n\n*\u000f' +
+                 '\u00d7\u00d6\u00a2\u00a8\u0085\u00e3<\u0083\u009c\u0093' +
+                 '\u00c2\u0006\u00da0\u00a1\u00879(G\u00ed\'',
+             'Test SHA512 as assumed binary')
+
+
   test.done()
 
 
