@@ -46,6 +46,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   Persistent<String> signature_algo_symbol = NODE_PSYMBOL("signature_algorithm");
   Persistent<String> signature_symbol = NODE_PSYMBOL("signature");
   Persistent<String> pubkey_symbol = NODE_PSYMBOL("public_key");
+  Persistent<String> public_key_algo = NODE_PSYMBOL("public_key_algo");
   Local<Object> info = Object::New();
 
   //subject name
@@ -60,6 +61,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   char buf [256];
   BIO* bio = BIO_new(BIO_s_mem());
   memset(buf, 0, sizeof(buf));
+  X509_CINF *ci = x->cert_info;
 
   //Serial
   i2a_ASN1_INTEGER(bio, X509_get_serialNumber(x));
@@ -73,7 +75,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   
   //valid from
   ASN1_TIME_print(bio, X509_get_notBefore(x));
-  BIO_read(bio, buf, sizeof(buf) - 1);
+  BIO_read(bio, buf, sizeof(buf)-1);
   info->Set(valid_from_symbol, String::New(buf));
 
   //Not before
@@ -81,10 +83,16 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   BIO_read(bio, buf, sizeof(buf)-1);
   info->Set(valid_to_symbol, String::New(buf));
 
+  //Public Key info
+  int wrote = i2a_ASN1_OBJECT(bio, ci->key->algor->algorithm);
+  BIO_read(bio, buf, sizeof(buf)-1);
+  buf[wrote] = '\0';
+  info->Set(public_key_algo, String::New(buf));
+
   //Signature Algorithm
-  X509_CINF *ci = x->cert_info;
-  i2a_ASN1_OBJECT(bio, ci->signature->algorithm);
-  BIO_read(bio, buf, sizeof(buf) -1);
+  wrote = i2a_ASN1_OBJECT(bio, ci->signature->algorithm);
+  BIO_read(bio, buf, sizeof(buf)-1);
+  buf[wrote] = '\0';
   info->Set(signature_algo_symbol, String::New(buf));
   
   //Signature
