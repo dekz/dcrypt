@@ -294,7 +294,16 @@ testx509 = (test) ->
   caPem = fs.readFileSync(fixtures + '/test_ca.pem', 'ascii')
   certPem = fs.readFileSync(fixtures + '/test_cert.pem', 'ascii')
   keyPem = fs.readFileSync(fixtures + '/test_key.pem', 'ascii')
-  console.log dcrypt.x509.parse(certPem)
+  cert =  dcrypt.x509.parse(certPem)
+  test.notDeepEqual cert, {}, 'x509 should not be empty'
+  test.notDeepEqual cert.subject, '', 'x509 Subject should not be empty'
+  test.notDeepEqual cert.serial, '', 'x509 serial should not be empty'
+  test.notDeepEqual cert.issuer, '', 'x509 issuer should not be empty'
+  test.notDeepEqual cert.public_key_algo, '', 'x509 public key algoirthm should not be empty'
+  test.notDeepEqual cert.signature, '', 'x509 signature should not be empty'
+  test.deepEqual cert.signature_algorithm, 'sha1WithRSAEncryption', 'This x509 certificate should have sha1WithRSAEncr'
+  test.deepEqual cert.public_key_algo, 'rsaEncryption', 'This x509 certificate should have rsaEncryption'
+  console.log cert
   test.done()
 
 

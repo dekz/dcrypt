@@ -48,7 +48,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   Persistent<String> signature_algo_symbol = NODE_PSYMBOL("signature_algorithm");
   Persistent<String> signature_symbol = NODE_PSYMBOL("signature");
   Persistent<String> pubkey_symbol = NODE_PSYMBOL("public_key");
-  Persistent<String> pubkey2_symbol = NODE_PSYMBOL("public_key2");
+  Persistent<String> pubkey_pem_symbol = NODE_PSYMBOL("public_key_pem");
   Persistent<String> public_key_algo = NODE_PSYMBOL("public_key_algo");
   Local<Object> info = Object::New();
 
@@ -96,9 +96,44 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   info->Set(public_key_algo, String::New(buf));
 
   //Public Key Info cont.
-  // wrote = EVP_PKEY_print_public(bio, pkey, 0, NULL);
-  // BIO_read(bio, buf, sizeof(buf)-1);
-  // info->Set(pubkey2_symbol, String::New(buf));
+  //Setup a key info subobject
+  Local<String> pub_str;
+  BIO *key_info_bio = BIO_new(BIO_s_mem());
+  if (pkey->type == EVP_PKEY_DSA) {
+    DSA *dsa = EVP_PKEY_get1_DSA(pkey);
+
+    DSA_free(dsa);
+  } else if (pkey->type == EVP_PKEY_RSA) {
+    RSA *rsa = EVP_PKEY_get1_RSA(pkey);
+    int mod_len = BN_num_bits(rsa->n);
+
+    size_t buf_len = 0;    
+    dx509->update_buf_len(rsa->n, &buf_len);
+    dx509->update_buf_len(rsa->e, &buf_len);
+
+    unsigned char *m = (unsigned char *) OPENSSL_malloc(buf_len+10);
+    int n;
+    m[0]=0;
+    n=BN_bn2bin(rsa->n,&m[1]);
+    for (int i=0; i<n; i++) {
+      BIO_printf(key_info_bio, "%02x%s", m[i],((i+1) == n) ? "":":");
+    }
+    char key_info_buf[buf_len*4];
+    BIO_read(key_info_bio, key_info_buf, sizeof(key_info_buf)-1);
+    pub_str = String::New((key_info_buf));
+    OPENSSL_free(m);
+
+    RSA_free(rsa);
+  } else if (pkey->type == EVP_PKEY_EC) {
+    EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
+
+    EC_KEY_free(ec_key);
+  } else {
+    pub_str = String::New("");
+  }
+  if (key_info_bio != NULL) BIO_free(key_info_bio);
+
+  info->Set(pubkey_symbol, pub_str);
 
   //Signature Algorithm
   wrote = i2a_ASN1_OBJECT(bio, ci->signature->algorithm);
@@ -158,6 +193,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
     info->Set(ext_key_usage_symbol, ext_key_usage);
   }
 
+  //Pub key in pem format
   BIO *key_bio = BIO_new(BIO_s_mem());
   int ok = PEM_write_bio_PUBKEY(key_bio, pkey);
   if (ok) {
@@ -166,7 +202,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
     char *pub_buf = (char *)malloc(bptr->length +1);
     memcpy(pub_buf, bptr->data, bptr->length-1);
     pub_buf[bptr->length-1] = 0;
-    info->Set(pubkey_symbol, String::New(pub_buf));
+    info->Set(pubkey_pem_symbol, String::New(pub_buf));
     delete [] pub_buf;
     BIO_free(key_bio);
   }
@@ -202,4 +238,12 @@ DX509::DX509() : ObjectWrap() {
 }
 
 DX509::~DX509() {
+}
+
+int DX509::update_buf_len(const BIGNUM *b, size_t *pbuflen) {
+	size_t i;
+	if (!b)
+		return 0;
+	if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
+			*pbuflen = i;
 }

@@ -8,6 +8,7 @@
 
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
+#include <openssl/evp.h>
 #include <openssl/err.h>
 
 #include <string.h>
@@ -35,6 +36,7 @@ class DX509: node::ObjectWrap {
     ~DX509();
 
   private:
+    int update_buf_len(const BIGNUM *b, size_t *pbuflen);
 };
 #endif
 
