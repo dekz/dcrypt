@@ -22,6 +22,7 @@ Openssl bindings for Node.js. Written in Coffeescript.
 * Random bytes using openssl RAND
 * Hashing
 * Encryption and Decryption with all Ciphers supported in OpenSSL, as well as RSA encryption and decryption
+* x509 Certificate Reading
 
 Install
 -------
@@ -76,8 +77,20 @@ Parse a RSA private key file and generate primitives
     keypair.parseRSA(fs.readFileSync('/path/to/rsa.priv'), false)
     >> { pub:
          { n: 'BA5570689BDA43E4DBCE11DD9F33251C0B0E19B52D1B5BB6AEEA6C9EA09543BCC0ACC0DEAF1E416DB2B6E466A6C063FEE2DB7914EFD2B02765999D0D7AED119392AD65CD994195DE7D92B241CA588508BAFA12819F4037F6C7F71E77D2D66B2B9ECE9D2502AB65AB3C5B5D27613F9CA7E067C4496B9B881A62FACC6F68494341',
-           e: '010001' },
-    
+           e: '010001' }, ...
+
+Parse an x509 certificate
+
+    certPem = fs.readFileSync('test_cert.pem', 'ascii')
+    cert = dcrypt.x509.parse(certPem)
+    >>  { subject: '/C=UK/ST=Acknack Ltd/L=Rhys Jones/O=node.js/OU=Test TLS Certificate/CN=localhost',
+        issuer: '/C=UK/ST=Acknack Ltd/L=Rhys Jones/O=node.js/OU=Test TLS Certificate/CN=localhost',
+        version: 3,
+        serial: 'a2:f4:50:6f:a6:46:44:8f',
+        valid_from: 'Nov 11 09:52:22 2009 GMT',
+        valid_to: 'Nov  6 09:52:22 2029 GMT',
+        public_key_algo: 'rsaEncryption',
+        signature_algorithm: 'sha1WithRSAEncryption', ...
  
 TODO
 ----

@@ -32,6 +32,8 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   ssize_t written = DecodeWrite(cert_buf, cert_len, args[0], BINARY);
   assert(cert_len = written);
   X509 *x = dx509->load_cert(cert_buf, cert_len, 1);
+  EVP_PKEY *pkey;
+  pkey = X509_get_pubkey(x);
 
   //node symbols
   Persistent<String> serial_symbol    = NODE_PSYMBOL("serial");
@@ -46,6 +48,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   Persistent<String> signature_algo_symbol = NODE_PSYMBOL("signature_algorithm");
   Persistent<String> signature_symbol = NODE_PSYMBOL("signature");
   Persistent<String> pubkey_symbol = NODE_PSYMBOL("public_key");
+  Persistent<String> pubkey2_symbol = NODE_PSYMBOL("public_key2");
   Persistent<String> public_key_algo = NODE_PSYMBOL("public_key_algo");
   Local<Object> info = Object::New();
 
@@ -63,6 +66,11 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   memset(buf, 0, sizeof(buf));
   X509_CINF *ci = x->cert_info;
 
+  //Version
+  long l;
+  l = X509_get_version(x)+1;
+  info->Set(version_symbol, Integer::New(l));
+
   //Serial
   ASN1_INTEGER *bs = X509_get_serialNumber(x);
   for (int i = 0; i< bs->length; i++) {
@@ -71,11 +79,6 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   BIO_read(bio, buf, sizeof(buf)-1);
   info->Set(serial_symbol, String::New(buf));
 
-  //Version
-  long l;
-  l = X509_get_version(x)+1;
-  info->Set(version_symbol, Integer::New(l));
-  
   //valid from
   ASN1_TIME_print(bio, X509_get_notBefore(x));
   BIO_read(bio, buf, sizeof(buf)-1);
@@ -91,6 +94,11 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   BIO_read(bio, buf, sizeof(buf)-1);
   buf[wrote] = '\0';
   info->Set(public_key_algo, String::New(buf));
+
+  //Public Key Info cont.
+  // wrote = EVP_PKEY_print_public(bio, pkey, 0, NULL);
+  // BIO_read(bio, buf, sizeof(buf)-1);
+  // info->Set(pubkey2_symbol, String::New(buf));
 
   //Signature Algorithm
   wrote = i2a_ASN1_OBJECT(bio, ci->signature->algorithm);
@@ -150,8 +158,6 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
     info->Set(ext_key_usage_symbol, ext_key_usage);
   }
 
-  EVP_PKEY *pkey;
-  pkey = X509_get_pubkey(x);
   BIO *key_bio = BIO_new(BIO_s_mem());
   int ok = PEM_write_bio_PUBKEY(key_bio, pkey);
   if (ok) {
@@ -168,6 +174,8 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
 
   // delete [] buf;
   X509_free(x);
+  EVP_PKEY_free(pkey);
+  delete [] cert_buf;
   if (bio != NULL) BIO_free(bio);
   return scope.Close(info);
 }
