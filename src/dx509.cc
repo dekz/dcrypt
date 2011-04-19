@@ -34,6 +34,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   X509 *x = dx509->load_cert(cert_buf, cert_len, 1);
 
   //node symbols
+  Persistent<String> serial_symbol    = NODE_PSYMBOL("serial");
   Persistent<String> subject_symbol    = NODE_PSYMBOL("subject");
   Persistent<String> issuer_symbol     = NODE_PSYMBOL("issuer");
   Persistent<String> valid_from_symbol = NODE_PSYMBOL("valid_from");
@@ -42,7 +43,8 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   Persistent<String> name_symbol       = NODE_PSYMBOL("name");
   Persistent<String> version_symbol    = NODE_PSYMBOL("version");
   Persistent<String> ext_key_usage_symbol = NODE_PSYMBOL("ext_key_usage");
-  Persistent<String> signature_symbol = NODE_PSYMBOL("signature_type");
+  Persistent<String> signature_algo_symbol = NODE_PSYMBOL("signature_algorithm");
+  Persistent<String> signature_symbol = NODE_PSYMBOL("signature");
   Persistent<String> pubkey_symbol = NODE_PSYMBOL("public_key");
   Local<Object> info = Object::New();
 
@@ -56,18 +58,47 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   OPENSSL_free(details);
 
   char buf [256];
-  //valid from
   BIO* bio = BIO_new(BIO_s_mem());
-  ASN1_TIME_print(bio, X509_get_notBefore(x));
   memset(buf, 0, sizeof(buf));
+
+  //Serial
+  i2a_ASN1_INTEGER(bio, X509_get_serialNumber(x));
+  BIO_read(bio, buf, sizeof(buf)-1);
+  info->Set(serial_symbol, String::New(buf));
+
+  //Version
+  long l;
+  l = X509_get_version(x)+1;
+  info->Set(version_symbol, Integer::New(l));
+  
+  //valid from
+  ASN1_TIME_print(bio, X509_get_notBefore(x));
   BIO_read(bio, buf, sizeof(buf) - 1);
   info->Set(valid_from_symbol, String::New(buf));
 
   //Not before
   ASN1_TIME_print(bio, X509_get_notAfter(x));
-  memset(buf, 0, sizeof(buf));
   BIO_read(bio, buf, sizeof(buf)-1);
   info->Set(valid_to_symbol, String::New(buf));
+
+  //Signature Algorithm
+  X509_CINF *ci = x->cert_info;
+  i2a_ASN1_OBJECT(bio, ci->signature->algorithm);
+  BIO_read(bio, buf, sizeof(buf) -1);
+  info->Set(signature_algo_symbol, String::New(buf));
+  
+  //Signature
+  BIO *sig_bio = BIO_new(BIO_s_mem());
+  ASN1_STRING *sigh = x->signature; 
+  unsigned char *s;
+  unsigned int n1 = sigh->length;
+  s = sigh->data;
+  for (int i=0; i<n1; i++) {
+    BIO_printf(sig_bio, "%02x%s", s[i], ((i+1) == n1) ? "":":");
+  }
+  char sig_buf [n1*3];
+  BIO_read(sig_bio, sig_buf, sizeof(sig_buf)-1);
+  info->Set(signature_symbol, String::New(sig_buf));
 
   //finger print
   int j;
