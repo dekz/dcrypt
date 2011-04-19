@@ -43,17 +43,17 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   Persistent<String> version_symbol    = NODE_PSYMBOL("version");
   Persistent<String> ext_key_usage_symbol = NODE_PSYMBOL("ext_key_usage");
   Persistent<String> signature_symbol = NODE_PSYMBOL("signature_type");
+  Persistent<String> pubkey_symbol = NODE_PSYMBOL("public_key");
   Local<Object> info = Object::New();
 
   //subject name
   char *details = X509_NAME_oneline(X509_get_subject_name(x), 0, 0);
   info->Set(subject_symbol, String::New(details));
 
+  //issuer name
   details = X509_NAME_oneline(X509_get_issuer_name(x), 0, 0);
   info->Set(issuer_symbol, String::New(details));
   OPENSSL_free(details);
-
-  BIO *bio_stderr = BIO_new_fp(stderr, BIO_NOCLOSE);
 
   char buf [256];
   //valid from
@@ -63,13 +63,66 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   BIO_read(bio, buf, sizeof(buf) - 1);
   info->Set(valid_from_symbol, String::New(buf));
 
-
   //Not before
   ASN1_TIME_print(bio, X509_get_notAfter(x));
   memset(buf, 0, sizeof(buf));
   BIO_read(bio, buf, sizeof(buf)-1);
   info->Set(valid_to_symbol, String::New(buf));
-  
+
+  //finger print
+  int j;
+  unsigned int n;
+  unsigned char md[EVP_MAX_MD_SIZE];
+  const EVP_MD *fdig = EVP_sha1();
+  if (X509_digest(x, fdig, md, &n)) {
+    const char hex[] = "0123456789ABCDEF";
+    char fingerprint[EVP_MAX_MD_SIZE*3];
+    for (j=0; j<n; j++) {
+      fingerprint[3*j] = hex[(md[j] & 0xf0) >> 4];
+      fingerprint[(3*j)+1] = hex[(md[j] & 0x0f)];
+      fingerprint[(3*j)+2] = ':';
+    }
+
+    if (n > 0) {
+      fingerprint[(3*(n-1))+2] = '\0';
+    } else {
+      fingerprint[0] = '\0';
+    }
+    info->Set(fingerprint_symbol, String::New(fingerprint));
+  } else {
+    fprintf(stderr, "Digest bad\n");
+  }
+ 
+  //Extensions
+  STACK_OF(ASN1_OBJECT) *eku = (STACK_OF(ASN1_OBJECT) *)X509_get_ext_d2i(
+      x, NID_ext_key_usage, NULL, NULL);
+  if (eku != NULL) {
+    Local<Array> ext_key_usage = Array::New();
+
+    for (int i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
+      memset(buf, 0, sizeof(buf));
+      OBJ_obj2txt(buf, sizeof(buf) - 1, sk_ASN1_OBJECT_value(eku, i), 1);
+      ext_key_usage->Set(Integer::New(i), String::New(buf));
+    }
+    sk_ASN1_OBJECT_pop_free(eku, ASN1_OBJECT_free);
+    info->Set(ext_key_usage_symbol, ext_key_usage);
+  }
+
+  EVP_PKEY *pkey;
+  pkey = X509_get_pubkey(x);
+  BIO *key_bio = BIO_new(BIO_s_mem());
+  int ok = PEM_write_bio_PUBKEY(key_bio, pkey);
+  if (ok) {
+    BUF_MEM *bptr;
+    BIO_get_mem_ptr(key_bio, &bptr);
+    char *pub_buf = (char *)malloc(bptr->length +1);
+    memcpy(pub_buf, bptr->data, bptr->length-1);
+    pub_buf[bptr->length-1] = 0;
+    info->Set(pubkey_symbol, String::New(pub_buf));
+    delete [] pub_buf;
+    BIO_free(key_bio);
+  }
+
 
   // delete [] buf;
   X509_free(x);
