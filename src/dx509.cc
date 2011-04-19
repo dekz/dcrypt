@@ -64,7 +64,10 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   X509_CINF *ci = x->cert_info;
 
   //Serial
-  i2a_ASN1_INTEGER(bio, X509_get_serialNumber(x));
+  ASN1_INTEGER *bs = X509_get_serialNumber(x);
+  for (int i = 0; i< bs->length; i++) {
+    BIO_printf(bio, "%02x%s", bs->data[i], ((i+1 == bs->length)? "": ":"));
+  }
   BIO_read(bio, buf, sizeof(buf)-1);
   info->Set(serial_symbol, String::New(buf));
 
