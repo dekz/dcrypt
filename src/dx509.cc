@@ -109,18 +109,19 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
 
     size_t buf_len = 0;    
     dx509->update_buf_len(rsa->n, &buf_len);
-    dx509->update_buf_len(rsa->e, &buf_len);
+    // dx509->update_buf_len(rsa->e, &buf_len);
 
     unsigned char *m = (unsigned char *) OPENSSL_malloc(buf_len+10);
     int n;
-    m[0]=0;
-    n=BN_bn2bin(rsa->n,&m[1]);
+    n=BN_bn2bin(rsa->n,&m[0]);
+    //00: out the front
+    BIO_printf(key_info_bio, "%02x:", 0);
     for (int i=0; i<n; i++) {
       BIO_printf(key_info_bio, "%02x%s", m[i],((i+1) == n) ? "":":");
     }
     char key_info_buf[buf_len*4];
     BIO_read(key_info_bio, key_info_buf, sizeof(key_info_buf)-1);
-    pub_str = String::New((key_info_buf));
+    pub_str = String::New(key_info_buf);
     OPENSSL_free(m);
 
     RSA_free(rsa);
