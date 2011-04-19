@@ -11,6 +11,7 @@ Cipher = _bindings.Cipher
 Decipher = _bindings.Decipher
 Rsa = _bindings.Rsa
 Hmac = _bindings.Hmac
+X509 = _bindings.X509
 
 dcrypt = {}
 
@@ -113,3 +114,9 @@ dcrypt.hmac = Hmac
 exports.hmac = {}
 exports.hmac.createHmac = (hmac, key) ->
   return (new Hmac).init(hmac, key)
+
+##X509
+dcrypt.x509 = X509
+exports.x509 = {}
+exports.x509.parse = (cert) ->
+  return (new X509).parse(cert)

@@ -9,6 +9,7 @@
 #include "cipher.h"
 #include "decipher.h"
 #include "hmac.h"
+#include "dx509.h"
 
 #include <v8.h>
 #include <node.h>
@@ -39,6 +40,7 @@ extern "C" {
     Cipher::Initialize(target);
     Decipher::Initialize(target);
     Hmac::Initialize(target);
+    DX509::Initialize(target);
   }
   NODE_MODULE(dcrypt, init);
 }

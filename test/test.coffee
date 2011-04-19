@@ -286,6 +286,18 @@ testNodeCryptoFixtures = (test) ->
 
   test.done()
 
+#
+# X509 tests
+#
+testx509 = (test) ->
+  fixtures = 'test/node/fixtures'
+  caPem = fs.readFileSync(fixtures + '/test_ca.pem', 'ascii')
+  certPem = fs.readFileSync(fixtures + '/test_cert.pem', 'ascii')
+  keyPem = fs.readFileSync(fixtures + '/test_key.pem', 'ascii')
+  console.log dcrypt.x509.parse(certPem)
+  test.done()
+
+
 
 
 
@@ -293,6 +305,7 @@ testNodeCryptoFixtures = (test) ->
 # Exports
 #
 #exports.testKAT_sign = testKAT_sign
+exports.testx509 = testx509
 exports.testNodeCryptoFixtures = testNodeCryptoFixtures
 exports.testIssue7_ecdsa_sha1 = testIssue7_ecdsa_sha1
 exports.testKeyPairs = testKeyPairs
