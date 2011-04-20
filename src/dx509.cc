@@ -9,6 +9,7 @@ void DX509::Initialize(Handle<Object> target) {
   constructor->SetClassName(String::NewSymbol("X509"));
 
   NODE_SET_PROTOTYPE_METHOD(constructor, "parse", parseCert);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "createCert", createCert);
   Local<ObjectTemplate> proto = constructor->PrototypeTemplate();
 
   target->Set(String::NewSymbol("X509"), constructor->GetFunction());
@@ -101,6 +102,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   BIO *key_info_bio = BIO_new(BIO_s_mem());
   if (pkey->type == EVP_PKEY_DSA) {
     DSA *dsa = EVP_PKEY_get1_DSA(pkey);
+    pub_str = String::New("");
 
     DSA_free(dsa);
   } else if (pkey->type == EVP_PKEY_RSA) {
@@ -127,6 +129,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
     RSA_free(rsa);
   } else if (pkey->type == EVP_PKEY_EC) {
     EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
+    pub_str = String::New("");
 
     EC_KEY_free(ec_key);
   } else {
@@ -247,4 +250,78 @@ int DX509::update_buf_len(const BIGNUM *b, size_t *pbuflen) {
 		return 0;
 	if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
 			*pbuflen = i;
+}
+
+Handle<Value> DX509::createCert(const Arguments &args) {
+  HandleScope scope;
+
+  DX509 *dx509 = ObjectWrap::Unwrap<DX509>(args.This());
+
+  X509 *x = NULL;
+  EVP_PKEY *pkey = NULL;
+  int ok = dx509->make_cert(&x, 0, 1024, &pkey, 365);
+  if (ok <= 0) {
+    return scope.Close(String::New("Fail"));
+  }
+
+  BIO *bp = BIO_new(BIO_s_mem());
+  ok =PEM_write_bio_X509(bp, x);
+  if (ok) {
+    BUF_MEM *bptr;
+    BIO_get_mem_ptr(bp, &bptr);
+    char *x509_buf = (char *) malloc(bptr->length+1);
+    memcpy(x509_buf, bptr->data, bptr->length-1);
+    x509_buf[bptr->length-1] = 0;
+    return scope.Close(String::New(x509_buf));
+  }
+
+  return scope.Close(String::New("Hi"));
+}
+
+int DX509::make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days) {
+  X509 *x;
+  EVP_PKEY *pk;
+  RSA *rsa;
+  X509_NAME *name = NULL;
+
+  //Use the key we're given, if we aren't given one then allocate
+  if ((pkeyp == NULL) || (*pkeyp == NULL)) {
+    if ((pk = EVP_PKEY_new()) == NULL) {
+      return -1;
+    }
+  } else {
+    pk = *pkeyp;
+  }
+
+  //Setup or use given x509
+  if ((x509p == NULL) || (*x509p == NULL)) {
+    if ((x=X509_new()) == NULL) {
+      return -1;
+    }
+  } else {
+    x = *x509p;
+  }
+
+  rsa=RSA_generate_key(bits, RSA_F4, NULL, NULL);
+  if (!EVP_PKEY_assign_RSA(pk, rsa)) {
+    return -1;
+  }
+  rsa = NULL;
+  X509_set_version(x, 2);
+  ASN1_INTEGER_set(X509_get_serialNumber(x), 1);
+  X509_gmtime_adj(X509_get_notBefore(x), 0);
+  X509_gmtime_adj(X509_get_notAfter(x), (long)60*60*24*days);
+  X509_set_pubkey(x, pk);
+  name = X509_get_subject_name(x);
+  // X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, "AU", -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name,"C", MBSTRING_ASC, (const unsigned char*)"UK", -1, -1, 0);
+  
+  X509_set_issuer_name(x, name);
+
+  if (!X509_sign(x, pk, EVP_sha1())) {
+    return -1;
+  }
+  *x509p = x;
+  *pkeyp = pk;
+  return 1;
 }

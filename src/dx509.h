@@ -33,10 +33,12 @@ class DX509: node::ObjectWrap {
   protected:
     static Handle<Value> parseCert(const Arguments &args);
     static Handle<Value> New(const Arguments &args);
+    static Handle<Value> createCert(const Arguments &args);
     ~DX509();
 
   private:
     int update_buf_len(const BIGNUM *b, size_t *pbuflen);
+    int make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days);
 };
 #endif
 

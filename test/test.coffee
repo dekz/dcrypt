@@ -304,6 +304,15 @@ testx509 = (test) ->
   test.deepEqual cert.signature_algorithm, 'sha1WithRSAEncryption', 'This x509 certificate should have sha1WithRSAEncr'
   test.deepEqual cert.public_key_algo, 'rsaEncryption', 'This x509 certificate should have rsaEncryption'
   console.log cert
+
+  dsa_pcaPem = fs.readFileSync(fixtures + '/dsa-pca.pem', 'ascii')
+  dsa_cert = dcrypt.x509.parse(dsa_pcaPem)
+  console.log dsa_cert
+
+  cert = dcrypt.x509.createCert()
+  console.log cert
+  console.log dcrypt.x509.parse(cert)
+
   test.done()
 
 
