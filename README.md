@@ -67,7 +67,7 @@ Encrypt a message with AES and a phrase
 
 Decrypt a message with AES and a phrase
 
-    decipher = dcrypt.decipher.createDecipher('AES-256-cbc')
+    decipher = dcrypt.decipher.createDecipher('AES-256-cbc', 'This is a key')
     cleartext = cipher.update(ciphertext, 'hex', 'utf8')
     cleartext += cipher.final('utf8')
     >> 'Hello there'
