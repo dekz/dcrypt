@@ -61,7 +61,7 @@ Encrypt and Decrypt with RSA
     
 Encrypt a message with AES and a phrase
 
-    cipher = dcrypt.cipher.createCipher('AES-256-cbc')
+    cipher = dcrypt.cipher.createCipher('AES-256-cbc', 'This is a key')
     ciphertext = cipher.update('Hello there', 'utf8', 'hex')
     ciphertext += cipher.final('hex')
 
