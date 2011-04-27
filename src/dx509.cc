@@ -260,9 +260,6 @@ Handle<Value> DX509::createCert(const Arguments &args) {
   X509 *x = NULL;
   EVP_PKEY *pkey = NULL;
   int ok = dx509->make_cert(&x, 0, 1024, &pkey, 365);
-  if (ok <= 0) {
-    return scope.Close(String::New("Fail"));
-  }
 
   BIO *bp = BIO_new(BIO_s_mem());
   ok =PEM_write_bio_X509(bp, x);
@@ -274,6 +271,9 @@ Handle<Value> DX509::createCert(const Arguments &args) {
     x509_buf[bptr->length-1] = 0;
     return scope.Close(String::New(x509_buf));
   }
+
+  if (x != NULL) X509_free(x);
+  if (pkey != NULL) EVP_PKEY_free(pkey);
 
   return scope.Close(String::New("Hi"));
 }

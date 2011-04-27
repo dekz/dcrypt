@@ -50,6 +50,12 @@ testHash = (test)  ->
 
   test.deepEqual hash1, hash2, 'Digest Interop failure'
   test.notDeepEqual hash1, '', 'Digest should not be empty'
+
+  hasher = dcrypt.hash.createHash('SHA256')
+  for i in [1..10]
+    h2 = hasher.update("test").digest('hex')
+    test.deepEqual hash1, h2
+
   test.done()
 
 testSign = (test) ->

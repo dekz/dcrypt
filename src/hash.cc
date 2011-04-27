@@ -54,7 +54,16 @@ bool Hash::HashInit(const char *hashType, const Arguments &args) {
 }
 
 int Hash::HashUpdate(char* data, int len) {
-  if (!initialised_) return 0;
+  // if (!initialised_) return 0;
+  if (!initialised_) {
+   int ok = EVP_DigestInit_ex(mdctx, md, NULL); 
+   if (!ok) {
+     ThrowException(Exception::Error(String::New("Error reinit ctx")));
+     return 0;
+   }
+   initialised_ = true;
+  }
+
   int ok = EVP_DigestUpdate(mdctx, data, len);
   if (!ok) {
     ThrowException(Exception::Error(String::New("Error Updating digest from openssl"))); 
