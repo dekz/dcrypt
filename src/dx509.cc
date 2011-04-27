@@ -263,19 +263,21 @@ Handle<Value> DX509::createCert(const Arguments &args) {
 
   BIO *bp = BIO_new(BIO_s_mem());
   ok =PEM_write_bio_X509(bp, x);
+  Local<String> x509_str = String::New("");
   if (ok) {
     BUF_MEM *bptr;
     BIO_get_mem_ptr(bp, &bptr);
     char *x509_buf = (char *) malloc(bptr->length+1);
     memcpy(x509_buf, bptr->data, bptr->length-1);
     x509_buf[bptr->length-1] = 0;
-    return scope.Close(String::New(x509_buf));
+    x509_str = String::New(x509_buf);
+    free(x509_buf);
   }
-
+  if (bp != NULL) BIO_free(bp);
   if (x != NULL) X509_free(x);
   if (pkey != NULL) EVP_PKEY_free(pkey);
 
-  return scope.Close(String::New("Hi"));
+  return scope.Close(x509_str);
 }
 
 int DX509::make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days) {
