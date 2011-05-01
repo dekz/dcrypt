@@ -32,7 +32,11 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   char* cert_buf = new char[cert_len];
   ssize_t written = DecodeWrite(cert_buf, cert_len, args[0], BINARY);
   assert(cert_len = written);
-  X509 *x = dx509->load_cert(cert_buf, cert_len, 1);
+  //Clean me up
+  //load_cert is loading into the dx509 private x509, but is also returning the same object it should only do the former
+  int ok = dx509->load_cert(cert_buf, cert_len, 1, &dx509->x509_);
+  X509* x = dx509->x509_;
+
   EVP_PKEY *pkey;
   pkey = X509_get_pubkey(x);
 
@@ -199,7 +203,7 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
 
   //Pub key in pem format
   BIO *key_bio = BIO_new(BIO_s_mem());
-  int ok = PEM_write_bio_PUBKEY(key_bio, pkey);
+  ok = PEM_write_bio_PUBKEY(key_bio, pkey);
   if (ok) {
     BUF_MEM *bptr;
     BIO_get_mem_ptr(key_bio, &bptr);
@@ -211,18 +215,21 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
     BIO_free(key_bio);
   }
 
-
-  // delete [] buf;
-  X509_free(x);
   EVP_PKEY_free(pkey);
   delete [] cert_buf;
   if (bio != NULL) BIO_free(bio);
   return scope.Close(info);
 }
 
-X509* DX509::load_cert(char *cert, int cert_len, int format) {
+int DX509::load_cert(char *cert, int cert_len, int format, X509** x509p) {
   BIO *bp = BIO_new_mem_buf(cert, cert_len);
-  X509 *x = NULL;
+  X509* x;
+  if ((x509p == NULL) || (*x509p == NULL)) {
+    x = X509_new();
+  } else {
+    x = *x509p;
+  }
+
   if (format == 0) {
     x = d2i_X509_bio(bp, NULL);
   } else if (format == 1) {
@@ -235,13 +242,18 @@ X509* DX509::load_cert(char *cert, int cert_len, int format) {
   if (bp != NULL) {
     BIO_free(bp);
   }
-  return x;
+  x509_ = x;
+  return 1;
 }
 
 DX509::DX509() : ObjectWrap() {
+  fprintf(stderr, "Constructor called\n");
+  x509_ = X509_new();
 }
 
 DX509::~DX509() {
+  fprintf(stderr, "Destructor called\n");
+  X509_free(x509_);
 }
 
 int DX509::update_buf_len(const BIGNUM *b, size_t *pbuflen) {
@@ -254,7 +266,6 @@ int DX509::update_buf_len(const BIGNUM *b, size_t *pbuflen) {
 
 Handle<Value> DX509::createCert(const Arguments &args) {
   HandleScope scope;
-
   DX509 *dx509 = ObjectWrap::Unwrap<DX509>(args.This());
 
   X509 *x = NULL;
@@ -274,9 +285,8 @@ Handle<Value> DX509::createCert(const Arguments &args) {
     free(x509_buf);
   }
   if (bp != NULL) BIO_free(bp);
-  if (x != NULL) X509_free(x);
+  dx509->x509_ = x;
   if (pkey != NULL) EVP_PKEY_free(pkey);
-
   return scope.Close(x509_str);
 }
 

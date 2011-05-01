@@ -27,7 +27,7 @@ class DX509: node::ObjectWrap {
     // int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
     // int add_ext(X509 *cert, int nid, char *value);
     // int parseCert();
-    X509* load_cert(char *cert, int cert_len, int format);
+    int load_cert(char *cert, int cert_len, int format, X509** x509p);
     DX509();
 
   protected:
@@ -39,6 +39,7 @@ class DX509: node::ObjectWrap {
   private:
     int update_buf_len(const BIGNUM *b, size_t *pbuflen);
     int make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days);
+    X509* x509_;
 };
 #endif
 

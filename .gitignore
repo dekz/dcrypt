@@ -1,0 +1,8 @@
+build
+*.pem
+*.lock-wscript
+.lock-wscript
+*.swp
+.swp
+node_modules
+node_modules/*
