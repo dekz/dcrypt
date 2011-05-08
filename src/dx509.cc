@@ -77,12 +77,15 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   info->Set(version_symbol, Integer::New(l));
 
   //Serial
-  ASN1_INTEGER *bs = X509_get_serialNumber(x);
-  for (int i = 0; i< bs->length; i++) {
-    BIO_printf(bio, "%02x%s", bs->data[i], ((i+1 == bs->length)? "": ":"));
-  }
-  BIO_read(bio, buf, sizeof(buf)-1);
-  info->Set(serial_symbol, String::New(buf));
+  //ASN1_INTEGER *bs = X509_get_serialNumber(x);
+  //for (int i = 0; i< bs->length; i++) {
+  //  BIO_printf(bio, "%02x%s", bs->data[i], ((i+1 == bs->length)? "": ":"));
+  //}
+  //BIO_read(bio, buf, sizeof(buf)-1);
+  ASN1_INTEGER *asn1_i = X509_get_serialNumber(x);
+  BIGNUM *bignum = ASN1_INTEGER_to_BN(asn1_i, NULL);
+  char *hex = BN_bn2hex(bignum);
+  info->Set(serial_symbol, String::New(hex));
 
   //valid from
   ASN1_TIME_print(bio, X509_get_notBefore(x));
@@ -247,8 +250,7 @@ int DX509::load_cert(char *cert, int cert_len, int format, X509** x509p) {
 }
 
 DX509::DX509() : ObjectWrap() {
-  fprintf(stderr, "Constructor called\n");
-  x509_ = X509_new();
+  //x509_ = X509_new();
 }
 
 DX509::~DX509() {
