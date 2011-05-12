@@ -135,10 +135,12 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
 
     RSA_free(rsa);
   } else if (pkey->type == EVP_PKEY_EC) {
+#ifndef WITH_ECDSA
     EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
     pub_str = String::New("");
 
     EC_KEY_free(ec_key);
+#endif
   } else {
     pub_str = String::New("");
   }
