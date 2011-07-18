@@ -28,17 +28,20 @@ class DX509: node::ObjectWrap {
     // int add_ext(X509 *cert, int nid, char *value);
     // int parseCert();
     int load_cert(char *cert, int cert_len, int format, X509** x509p);
+    int load_private_key(char *pkey_buf, int pkey_len, EVP_PKEY** pkey);
     DX509();
 
   protected:
     static Handle<Value> parseCert(const Arguments &args);
     static Handle<Value> New(const Arguments &args);
     static Handle<Value> createCert(const Arguments &args);
+    static Handle<Value> signCert(const Arguments &args);
     ~DX509();
 
   private:
+    int make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days, const char* country, const char* cname);
+    int sign_cert(X509 **cert, X509 *ca, EVP_PKEY *ca_pkey);
     int update_buf_len(const BIGNUM *b, size_t *pbuflen);
-    int make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days);
     X509* x509_;
 };
 #endif

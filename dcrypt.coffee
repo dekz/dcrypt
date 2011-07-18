@@ -120,5 +120,9 @@ dcrypt.x509 = X509
 exports.x509 = {}
 exports.x509.parse = (cert) ->
   return (new X509).parse(cert)
-exports.x509.createCert = (args) ->
-  return (new X509).createCert(args)
+exports.x509.createCert = (country, cname) ->
+  return (new X509).createCert(country, cname)
+exports.x509.signCert = (cert, ca_cert, ca_pkey) ->
+  x509 = new X509
+  x509.parse(cert)
+  return x509.signCert(ca_cert, ca_pkey)
