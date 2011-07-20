@@ -39,7 +39,7 @@ class DX509: node::ObjectWrap {
     ~DX509();
 
   private:
-    int make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days);
+    int make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days, long serial);
     void add_entry(X509 *x509, const char*key, const char*value);
     int add_ext(X509 *x509, char*key, char* value);
     int sign_cert(X509 **cert, X509 *ca, EVP_PKEY *ca_pkey);

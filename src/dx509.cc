@@ -294,18 +294,19 @@ int DX509::update_buf_len(const BIGNUM *b, size_t *pbuflen) {
 Handle<Value> DX509::createCert(const Arguments &args) {
   HandleScope scope;
   DX509 *dx509 = ObjectWrap::Unwrap<DX509>(args.This());
-  if (args.Length()<4) {
-    return ThrowException(Exception::Error(String::New("createCert requires 4 arguments.")));
+  if (args.Length()<5) {
+    return ThrowException(Exception::Error(String::New("createCert requires 5 arguments.")));
   }
   // .createCert(bitSize, days, subject, extensions);
   int bitSize = args[0]->Int32Value();
   int days = args[1]->Int32Value();
-  Local<Object> subject = args[2]->ToObject();
-  Local<Object> extensions = args[3]->ToObject();
+  long serial = args[2]->Int32Value();
+  Local<Object> subject = args[3]->ToObject();
+  Local<Object> extensions = args[4]->ToObject();
 
   X509 *x = NULL;
   EVP_PKEY *pkey = NULL;
-  int ok = dx509->make_cert(&x, 0, bitSize, &pkey, days);
+  int ok = dx509->make_cert(&x, 0, bitSize, &pkey, days,serial);
 
   Local<Array> subject_keys = subject->GetPropertyNames();
   for (int i=0,l=subject_keys->Length();i<l;i++) {
@@ -404,7 +405,7 @@ Handle<Value> DX509::signCert(const Arguments &args) { /* ca, ca_pkey */
   return scope.Close(x509_str);
 }
 
-int DX509::make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days) {
+int DX509::make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int days, long serial) {
   X509 *x;
   EVP_PKEY *pk;
   RSA *rsa;
@@ -434,7 +435,7 @@ int DX509::make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int da
   }
   rsa = NULL;
   X509_set_version(x, 2);
-  ASN1_INTEGER_set(X509_get_serialNumber(x), 65535);
+  ASN1_INTEGER_set(X509_get_serialNumber(x), serial);
   X509_gmtime_adj(X509_get_notBefore(x), 0);
   X509_gmtime_adj(X509_get_notAfter(x), (long)60*60*24*days);
   X509_set_pubkey(x, pk);
