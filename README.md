@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/dekz/dcrypt.png)](http://travis-ci.org/dekz/dcrypt)
                                                                  
            _|                                            _|      
        _|_|_|    _|_|_|  _|  _|_|  _|    _|  _|_|_|    _|_|_|_|  
