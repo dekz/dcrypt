@@ -10,6 +10,7 @@ void DX509::Initialize(Handle<Object> target) {
 
   NODE_SET_PROTOTYPE_METHOD(constructor, "parse", parseCert);
   NODE_SET_PROTOTYPE_METHOD(constructor, "createCert", createCert);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "signCert", signCert);
   Local<ObjectTemplate> proto = constructor->PrototypeTemplate();
 
   target->Set(String::NewSymbol("X509"), constructor->GetFunction());
@@ -128,8 +129,9 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
     for (int i=0; i<n; i++) {
       BIO_printf(key_info_bio, "%02x%s", m[i],((i+1) == n) ? "":":");
     }
-    char key_info_buf[buf_len*4];
+    char key_info_buf[(n+1)*3];
     BIO_read(key_info_bio, key_info_buf, sizeof(key_info_buf)-1);
+    key_info_buf[sizeof(key_info_buf)-1]=NULL;
     pub_str = String::New(key_info_buf);
     OPENSSL_free(m);
 
@@ -159,13 +161,17 @@ Handle<Value> DX509::parseCert(const Arguments &args) {
   ASN1_STRING *sigh = x->signature; 
   unsigned char *s;
   unsigned int n1 = sigh->length;
-  s = sigh->data;
-  for (int i=0; i<n1; i++) {
-    BIO_printf(sig_bio, "%02x%s", s[i], ((i+1) == n1) ? "":":");
+  if (n1>0) {
+    s = sigh->data;
+    for (int i=0; i<n1; i++) {
+      BIO_printf(sig_bio, "%02x%s", s[i], ((i+1) == n1) ? "":":");
+    }
+    char sig_buf [n1*3];
+    BIO_read(sig_bio, sig_buf, sizeof(sig_buf)-1);
+    info->Set(signature_symbol, String::New(sig_buf));
+  } else {
+    info->Set(signature_symbol, String::New(""));
   }
-  char sig_buf [n1*3];
-  BIO_read(sig_bio, sig_buf, sizeof(sig_buf)-1);
-  info->Set(signature_symbol, String::New(sig_buf));
 
   //finger print
   int j;
@@ -248,6 +254,23 @@ int DX509::load_cert(char *cert, int cert_len, int format, X509** x509p) {
     BIO_free(bp);
   }
   x509_ = x;
+  *x509p = x;
+  return 1;
+}
+
+int DX509::load_private_key(char *pkey_buf, int pkey_len, EVP_PKEY **pkey) {
+  BIO *bp = BIO_new_mem_buf(pkey_buf, pkey_len);
+  EVP_PKEY *key;
+
+  key = PEM_read_bio_PrivateKey(bp, NULL, NULL, NULL);
+
+  if (key == NULL) {
+    // ERR_print_errors(stderr);
+  }
+  if (bp != NULL) {
+    BIO_free(bp);
+  }
+  *pkey = key;
   return 1;
 }
 
@@ -256,7 +279,7 @@ DX509::DX509() : ObjectWrap() {
 }
 
 DX509::~DX509() {
-  fprintf(stderr, "Destructor called\n");
+  //fprintf(stderr, "Destructor called\n");
   X509_free(x509_);
 }
 
@@ -271,16 +294,39 @@ int DX509::update_buf_len(const BIGNUM *b, size_t *pbuflen) {
 Handle<Value> DX509::createCert(const Arguments &args) {
   HandleScope scope;
   DX509 *dx509 = ObjectWrap::Unwrap<DX509>(args.This());
+  if (args.Length()<4) {
+    return ThrowException(Exception::Error(String::New("createCert requires 4 arguments.")));
+  }
+  // .createCert(bitSize, days, subject, extensions);
+  int bitSize = args[0]->Int32Value();
+  int days = args[1]->Int32Value();
+  Local<Object> subject = args[2]->ToObject();
+  Local<Object> extensions = args[3]->ToObject();
 
   X509 *x = NULL;
   EVP_PKEY *pkey = NULL;
-  int ok = dx509->make_cert(&x, 0, 1024, &pkey, 365);
+  int ok = dx509->make_cert(&x, 0, bitSize, &pkey, days);
+
+  Local<Array> subject_keys = subject->GetPropertyNames();
+  for (int i=0,l=subject_keys->Length();i<l;i++) {
+    String::Utf8Value key(subject_keys->Get(Integer::New(i)));
+    String::Utf8Value value(subject->Get(String::New(*key)));
+    dx509->add_entry(x, *key, *value);
+  }
+ 
+  Handle<Array> ext_keys = extensions->GetPropertyNames();
+  for (int i=0,l=ext_keys->Length();i<l;i++) {
+    String::Utf8Value key(ext_keys->Get(i));
+    String::Utf8Value value(extensions->Get(String::New(*key)));
+    dx509->add_ext(x, *key, *value);
+  }
+
+  BUF_MEM *bptr;
 
   BIO *bp = BIO_new(BIO_s_mem());
   ok =PEM_write_bio_X509(bp, x);
   Local<String> x509_str = String::New("");
   if (ok) {
-    BUF_MEM *bptr;
     BIO_get_mem_ptr(bp, &bptr);
     char *x509_buf = (char *) malloc(bptr->length+1);
     memcpy(x509_buf, bptr->data, bptr->length-1);
@@ -289,8 +335,72 @@ Handle<Value> DX509::createCert(const Arguments &args) {
     free(x509_buf);
   }
   if (bp != NULL) BIO_free(bp);
+
+  bp = BIO_new(BIO_s_mem());
+  ok = PEM_write_bio_PrivateKey(bp, pkey, NULL, NULL, 0, NULL, NULL);
+  Local<String> pkey_str = String::New("");
+  if (ok) {
+    BIO_get_mem_ptr(bp, &bptr);
+    char *pkey_buf = (char *) malloc(bptr->length+1);
+    memcpy(pkey_buf, bptr->data, bptr->length-1);
+    pkey_buf[bptr->length-1] = 0;
+    pkey_str = String::New(pkey_buf);
+    free(pkey_buf);
+  }
+  if (bp != NULL) BIO_free(bp);
+
   dx509->x509_ = x;
   if (pkey != NULL) EVP_PKEY_free(pkey);
+
+  Local<Object> cert_obj = Object::New();
+  cert_obj->Set(String::New("x509"), x509_str);
+  cert_obj->Set(String::New("pkey"), pkey_str);
+
+  return scope.Close(cert_obj);
+}
+
+Handle<Value> DX509::signCert(const Arguments &args) { /* ca, ca_pkey */
+  HandleScope scope;
+  DX509 *dx509 = ObjectWrap::Unwrap<DX509>(args.This());
+
+  ssize_t ca_cert_len = DecodeBytes(args[0], BINARY);
+  char* ca_cert_buf = new char[ca_cert_len];
+  ssize_t written = DecodeWrite(ca_cert_buf, ca_cert_len, args[0], BINARY);
+  assert(ca_cert_len = written);
+
+  ssize_t ca_pkey_len = DecodeBytes(args[1], BINARY);
+  char* ca_pkey_buf = new char[ca_pkey_len];
+  written = DecodeWrite(ca_pkey_buf, ca_pkey_len, args[1], BINARY);
+  assert(ca_pkey_len = written);
+
+  X509 * saved_cert = dx509->x509_;
+  X509 * ca = NULL;
+  int ok = dx509->load_cert(ca_cert_buf, ca_cert_len, 1, &ca);
+  dx509->x509_ = saved_cert;
+
+  EVP_PKEY *ca_pkey = NULL;
+  ok = dx509->load_private_key(ca_pkey_buf, ca_pkey_len, &ca_pkey);
+
+  ok = dx509->sign_cert(&dx509->x509_, ca, ca_pkey);
+
+  if (ca != NULL) X509_free(ca);
+  if (ca_pkey != NULL) EVP_PKEY_free(ca_pkey);
+
+  BUF_MEM *bptr;
+  BIO *bp = BIO_new(BIO_s_mem());
+  ok =PEM_write_bio_X509(bp, dx509->x509_);
+
+  Local<String> x509_str = String::New("");
+  if (ok) {
+    BIO_get_mem_ptr(bp, &bptr);
+    char *x509_buf = (char *) malloc(bptr->length+1);
+    memcpy(x509_buf, bptr->data, bptr->length-1);
+    x509_buf[bptr->length-1] = 0;
+    x509_str = String::New(x509_buf);
+    free(x509_buf);
+  }
+  if (bp != NULL) BIO_free(bp);
+
   return scope.Close(x509_str);
 }
 
@@ -324,20 +434,50 @@ int DX509::make_cert(X509 **x509p, int type, long bits, EVP_PKEY **pkeyp, int da
   }
   rsa = NULL;
   X509_set_version(x, 2);
-  ASN1_INTEGER_set(X509_get_serialNumber(x), 1);
+  ASN1_INTEGER_set(X509_get_serialNumber(x), 65535);
   X509_gmtime_adj(X509_get_notBefore(x), 0);
   X509_gmtime_adj(X509_get_notAfter(x), (long)60*60*24*days);
   X509_set_pubkey(x, pk);
-  name = X509_get_subject_name(x);
-  // X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, "AU", -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name,"C", MBSTRING_ASC, (const unsigned char*)"UK", -1, -1, 0);
-  
-  X509_set_issuer_name(x, name);
-
-  if (!X509_sign(x, pk, EVP_sha1())) {
-    return -1;
-  }
+ 
   *x509p = x;
   *pkeyp = pk;
+  return 1;
+}
+
+void DX509::add_entry(X509 *x509, const char* key, const char* value) {
+  X509_NAME *name = X509_get_subject_name(x509);
+  X509_NAME_add_entry_by_txt(name, key, MBSTRING_UTF8, (const unsigned char*)value, -1, -1, 0);
+}
+
+int DX509::add_ext(X509 *cert, char*key, char *value) {
+  X509_EXTENSION *ex;
+  X509V3_CTX ctx;
+  /* This sets the 'context' of the extensions. */
+  /* No configuration database */
+  X509V3_set_ctx_nodb(&ctx);
+  /* Issuer and subject certs: both the target since it is self signed,
+   * no request and no CRL
+   */
+  X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+  ex = X509V3_EXT_conf(NULL, &ctx, key, value); // is this UTF8? I hope so. XXX
+  if (!ex)
+    return 0;
+
+  X509_add_ext(cert,ex,-1);
+  X509_EXTENSION_free(ex);
+  return 1;
+}
+
+
+int DX509::sign_cert(X509 **cert, X509 *ca, EVP_PKEY *ca_pkey) {
+  EVP_PKEY *pk;
+  X509_NAME *ca_name = NULL;
+
+  ca_name = X509_get_subject_name(ca);
+  X509_set_issuer_name(*cert, ca_name);
+
+  if (!X509_sign(*cert, ca_pkey, EVP_sha1())) {
+    return -1;
+  }
   return 1;
 }
